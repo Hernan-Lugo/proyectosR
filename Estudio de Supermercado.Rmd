@@ -1,0 +1,812 @@
+---
+title: "Estudio de Supermercado de Minoristas"
+author: "Hernan"
+date: "2023-09-17"
+output: html_document
+---
+
+# ¿Cómo puede un  supermercado jugar de manera inteligente? 
+
+## 1.- Acerca de la empresa 
+
+Tenemos la data de un Supermercado de Minoristas, correspondiente a 4 anos (2011-2014)
+
+## 2.- Definición del problema:
+
+Vamos a realizar un estudio detallado sobre los datos en cuestion y poder analizar y visualizar que historias podemos contar sobre este supermercado de minoristas en funcion de sus ventas y ganancias
+
+### 2.1.- En resumen:
+
+En definitiva vamos a realizar el analisis de los datos con el fin de poder visualizar cual a sido el resultado de las ventas y las ganancias entre los anos  2011 y 2014. Para ello haremos las siguientes visualizaciones:
+
+1.- El total de las ventas vs ganancias 
+2.- El total de las ventas vs ganancias por ano  
+3.- El total de las ventas vs ganancias por segmento 
+4.- El total de las ventas vs ganancias por ano por cada segmento 
+5.- El total de las ventas vs ganancias por mercado 
+6.- El total de las ventas vs ganancias por ano por cada mercado
+7.- El total de las ventas vs ganancias por region 
+8.- El total de las ventas vs ganancias por ano por cada region
+9.- El total de las ventas vs ganancias por categoria 
+10.- El total de las ventas vs ganancias por ano por cada categoria
+9.- El total de las ventas vs ganancias por sub-categoria 
+10.- El total de las ventas vs ganancias por ano por cada sub-categoria
+11.- Paises con mayores ventas vs ganancias en el periodo 2011-2014 (Top 15)
+12.- Paises con menores ventas vs ganancias en el periodo 2011-2014 (Top 15)
+13.- Comportamiento de las ventas vs ganancias por mes
+13.- Comportamiento de las ventas vs ganancias por mes para cada ano
+14.- cuales son los meses con mayor ventas
+15.- cuales son los meses con mayor ganancias
+16.- Productos con mayores Ventas (Top 15)
+16.- Productos con mayores Ganancias (Top 15)
+17.- Productos con mayores ventas vs ganancias por Region (Top 15)
+17.- Productos con mayores ventas vs ganancias por Ciudad (Top 15)
+
+### 2.2.- Algunas preguntas a considerar:
+**Tres preguntas guiarán el futuro programa de ............:**
+
+1.- ¿Cuáles son algunas tendencias en la venta vs ganancias de los productos? 
+
+2.- ¿Quienes demandan mas productos? 
+
+3.- ¿Cómo podrían estas tendencias ayudar a influir en la estrategia de marketing del supermercado?
+
+
+## 3.- Fuentes de Datos utilizados:
+
+Fuente de datos: Conjunto de datos de ventas de supermercados: https://www.kaggle.com/jr2ngb/superstore-data
+
+
+### 3.1 Cargamos e Instalamos los paquetes necesarios para el estudio
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(skimr)
+library(janitor)
+library(here)
+library(lubridate) # para formatos de fechas y horas
+library(ggplot2)  # Para crear Visualizaciones
+library(sqldf)  # para correr sql en R
+library(tidyr)
+library(ggpubr)  # para crear y personalizar ggplot2
+library(scales)  #escalado utilizado por ggplots
+library(stringr) #limpieza de datos
+library(tsibble)
+library(zoo) # Analisis de series temporales
+```
+
+
+### 3.2.- Procedemos a cargar los archivos .csv que utilizaremos para el estudio.
+
+
+```{r}
+datos_supermercado <- read_csv("~/ESTUDIO DE CASO/Estudio de Supermercado/Supermercado_2011_2014.csv")
+```
+### 3.3.- Hacemos una revision breve al archivo cargado
+
+```{r}
+head(datos_supermercado)
+```
+
+
+
+### 3.4.- Revisemos la estructura de datos de cada uno de los archivos
+#### 3.4.1.- Revisemos los nombres de las variables de cada uno de los archivos
+
+```{r}
+colnames(datos_supermercado)
+```
+
+#### 3.4.2.- Inspeccionar los dataframes para buscar incongruencias 
+
+```{r}
+str(datos_supermercado)
+```
+
+o
+
+```{r}
+glimpse(datos_supermercado)
+```
+
+
+## 4.- Procesar
+
+### 4.1.-  Estandarizamos el nombre de las columnas de nuestro dataframe
+
+```{r}
+datos_supermercado1 <- datos_supermercado %>%
+  rename(id = "Row ID", nro_orden = "Order ID", fecha_orden = "Order Date", 
+         fecha_envio = "Ship Date", modo_envio = "Ship Mode", id_cliente = "Customer ID",
+         nombre_cliente = "Customer Name", segmento = "Segment", ciudad = "City", 
+         estado = "State", pais = "Country", codigo_postal = "Postal Code", mercado = "Market",
+         region = "Region", id_producto = "Product ID", categoria = "Category", 
+         sub_categoria = "Sub-Category", nombre_producto = "Product Name", ventas = "Sales",
+         cantidad = "Quantity", descuento = "Discount", ganancia = "Profit", 
+         costo_envio = "Shipping Cost", prioridad_pedido = "Order Priority")
+
+colnames(datos_supermercado1)
+```
+
+### 4.2.- Pasamos todas las fechas a formato Date.
+
+```{r}
+datos_supermercado1$fecha_orden <- as.Date(datos_supermercado1$fecha_orden, format="%d/%m/%Y")
+datos_supermercado1$fecha_envio <- as.Date(datos_supermercado1$fecha_envio, format="%d/%m/%Y")
+head(datos_supermercado1)
+```
+
+### 4.3.- Agregamos a nuestro nuevo Data Frame cuatro nuevas columnas, donde tendremos por separado el **ano**, **mes** y **dia** de la fecha de orden, ademas agregaremos la **abreviatura del mes** y el **dia de la semana** Por ultimo agregaremos una nueva columna que contemple el **tiempo en dias** que se tarda en realizar el envio desde que se emite la orden
+
+```{r}
+datos_supermercado1 <- datos_supermercado1 %>%
+  arrange(desc(fecha_orden)) %>%
+  mutate(
+    ano = year(fecha_orden),
+    mes = month(fecha_orden),
+    dia = mday(fecha_orden),
+    ano_mes = format(as.Date(fecha_orden), "%Y-%m"),
+    mes_abr = month(fecha_orden, label = TRUE, abbr = TRUE),
+    dia_semana = wday(fecha_orden, label = TRUE, abbr = FALSE),
+    tiempo_envio = as.numeric(difftime(fecha_envio, fecha_orden, units= "days")))
+  
+head(datos_supermercado1)
+```
+
+
+### 4.4.-  Revisamos la existencia de duplicados
+
+```{r}
+sum(duplicated(datos_supermercado1))
+```
+**No hay existencia de duplicados en el dataframe**
+
+
+### 4.5.-  Revisamos la existencia de datos nulos o perdidos
+
+```{r}
+nulos <-  sum(is.na(datos_supermercado1$id))
+nulos1 <-  sum(is.na(datos_supermercado1$nro_orden))
+nulos2 <-  sum(is.na(datos_supermercado1$id_cliente))
+nulos3 <-  sum(is.na(datos_supermercado1$id_producto))
+nulos
+nulos1
+nulos2
+nulos3
+```
+**No exixten datos nulos ni perdidos en las variables analizadas**
+
+
+### 4.6.-  Analisis de algunas estadísticas de resumen rápido que nos gustaría saber sobre nuestro marco de datos
+
+```{r}
+datos_supermercado1 %>%
+  select(id, nro_orden, fecha_orden, fecha_envio, modo_envio, id_cliente, nombre_cliente,               segmento, ciudad, estado, pais, codigo_postal, mercado, region, id_producto, 
+         categoria, sub_categoria, nombre_producto, ventas, cantidad, descuento, ganancia,  
+         costo_envio, prioridad_pedido, tiempo_envio) %>%
+  summary()
+```
+
+### 4.7.- Cuantos paises unicos hay en nuestra muestra?
+
+```{r}
+n_distinct(datos_supermercado1$pais)
+```
+
+### 4.8.- Revisamos que los diferentes modos de envio esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_envio <- datos_supermercado1 %>% distinct(modo_envio)
+tipos_envio
+```
+
+### 4.9.- Revisamos que los diferentes tipos de segmento esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_segmento <- datos_supermercado1 %>% distinct(segmento)
+tipos_segmento
+```
+
+### 4.10.- Revisemos los diferentes tipos de mercado esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_mercado <- datos_supermercado1 %>% distinct(mercado)
+tipos_mercado
+```
+
+### 4.11.- Revisemos las diferentes regiones esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_region <- datos_supermercado1 %>% distinct(region)
+tipos_region
+```
+
+### 4.12.- Revisemos las diferentes categorias y sub categorias esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_categoria <- datos_supermercado1 %>%
+  arrange(categoria, sub_categoria) %>%
+  distinct(categoria, sub_categoria)
+
+tipos_categoria
+```
+
+### 4.13.- Revisemos las diferentes prioridades de pedidos esten bien cargados, es decir, que no existan nulos y ademas que no existan espacios en blanco.
+
+```{r}
+tipos_prioridad <- datos_supermercado1 %>% distinct(prioridad_pedido)
+tipos_prioridad
+```
+
+
+## 5.-  Comenzamos el proceso de Analisis Descriptivo **(Analizar y Compartir)**
+
+### 5.1- Comparamos las estadisticas correspondientes a los tiempos de envio (media, mediana, max y min) con respecto a la prioridad del pedido.
+
+```{r}
+aggregate(datos_supermercado1$tiempo_envio ~ datos_supermercado1$prioridad_pedido, FUN = mean) # la media
+aggregate(datos_supermercado1$tiempo_envio ~ datos_supermercado1$prioridad_pedido, FUN = median) # la mediana
+aggregate(datos_supermercado1$tiempo_envio ~ datos_supermercado1$prioridad_pedido, FUN = max) # maximo
+aggregate(datos_supermercado1$tiempo_envio ~ datos_supermercado1$prioridad_pedido, FUN = min) # minimo
+```
+
+### 5.2.- Visualicemos el total de las ventas vs ganancias (2011-2014)
+
+```{r}
+sqldf("select sum(ventas) as ventas, sum(ganancia) as ganancias
+        from datos_supermercado1") %>%
+  gather(Renglon, Totales, ventas:ganancias) %>%
+  ggplot(aes(x = Renglon, y = Totales, fill = Renglon)) +  
+  geom_col(position = "dodge") +
+  scale_x_discrete(limits = c("ventas", "ganancias")) + # Cambia el oreden de las barras
+  labs(title = "Ventas vs Ganancias (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se observa una ganancia durante el periodo de 2011-2014 de 1.467.457,29$, lo que corresponde a un 11.6%**
+
+
+### 5.3.- Visualicemos el total de las ventas por ano (2011 - 2014)
+
+```{r}
+  sqldf("select ano, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by ano
+        order by ano") %>%
+  ggplot(aes(x = ano, y = total_ventas, fill = ano)) + geom_col(position = "dodge") +
+  coord_flip() + labs(title = "Total ventas por año (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+**Se nota un crecimiento exponencial de las ventas entre los años 2011-2014**
+
+### 5.4.- Visualicemos el total ganancias por año
+
+```{r}
+  sqldf("select ano, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by ano
+        order by ano") %>%
+  ggplot(aes(x = ano, y = total_ganancias, fill = ano)) +  geom_col(position = "dodge") +
+  coord_flip() + labs(title = "Total Ganancias por año (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se nota un crecimiento exponencial de las ganancias entre los anos 2011-2014**
+
+### 5.5.- Visualicemos el total de las ventas por segmento (2011 - 2014)
+
+
+```{r}
+  sqldf("select segmento, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by segmento
+        order by segmento") %>%
+  ggplot(aes(x = segmento, y = total_ventas, fill = segmento)) +  
+  geom_col(position = "dodge") +
+  labs(title = "Total ventas por segmento (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+**El segmento de mayores ventas ha sido el consumidor**
+
+
+### 5.6.- Visualicemos el total de las ganancias por segmento
+
+```{r}
+  sqldf("select segmento, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by segmento
+        order by segmento") %>%
+  ggplot(aes(x = segmento, y = total_ganancias, fill = segmento)) + geom_col(position = "dodge") +
+  labs(title = "Total ganancias por segmento (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+**El segmento de mayores ganancias ha sido el consumidor**
+
+
+### 5.7.- Visualicemos el total de las ventas por ano por cada segmento
+
+```{r}
+  sqldf("select segmento, ano, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by segmento, ano
+        order by segmento, ano") %>%
+  ggplot(aes(x = ano, y = total_ventas, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~segmento) + coord_flip() + theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Total ventas por año por cada segmento", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Todos los segmento han tenido un crecimiento anual en sus ventas, siendo estas lideradas por el sector consumidor**
+
+### 5.8.- Visualicemos el total de las ganancias por ano por cada segmento
+
+```{r}
+  sqldf("select segmento, ano, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by segmento, ano
+        order by segmento, ano") %>%
+  ggplot(aes(x = ano, y = total_ganancias, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~segmento) + coord_flip() +
+  labs(title = "Total ganancias por año por cada segmento", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+**Todos los segmento han tenido un crecimiento anual en sus ganancias, siendo estas lideradas por el sector consumidor**
+
+
+### 5.9.- Visualicemos el total de las ventas por mercado (2011 - 2014)
+
+```{r}
+  sqldf("select mercado, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by mercado
+        order by mercado") %>%
+  ggplot(aes(x = reorder(mercado, -total_ventas), y = total_ventas, fill = mercado)) +  geom_col(position = "dodge") +
+  theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Total ventas por mercado (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**El mercado con mayores ventas es el Asia_Pacifico (APAC), seguido por Europa y Estados Unidos, respectivamente**
+
+### 5.10.- Visualicemos el total de las ganancias por mercado (2011 - 2014)
+
+```{r}
+  sqldf("select mercado, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by mercado
+        order by mercado") %>%
+  ggplot(aes(x = reorder(mercado, -total_ganancias), y = total_ganancias, fill = mercado)) +  geom_col(position = "dodge") +
+  theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Total ganancias por mercado (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**El mercado con mayores ganancias es el Asia_Pacifico (APAC), seguido por Europa y Estados Unidos, respectivamente**
+
+### 5.11.- Visualicemos el total de las ventas por ano por cada mercado
+
+```{r}
+  sqldf("select mercado, ano, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by mercado, ano
+        order by mercado, ano") %>%
+  ggplot(aes(x = ano, y = total_ventas, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~mercado) + coord_flip() + theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Total ventas por año por cada mercado", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se observa un crecimiento de las ventas por ano, para cada uno de los mercados, siendo liderado por APAC.**
+
+### 5.12.- Visualicemos el total de las ganancias por ano por cada mercado
+
+```{r}
+  sqldf("select mercado, ano, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by mercado, ano
+        order by mercado, ano") %>%
+  ggplot(aes(x = ano, y = total_ganancias, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~mercado) + coord_flip() +
+  labs(title = "Total ganancias por año por cada mercado", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se observa un crecimiento de las ganancias por ano, para cada uno de los mercados, siendo liderado por APAC.**
+
+
+### 5.13.- Visualicemos el total de las ventas por categoria (2011 - 2014)
+
+```{r}
+  sqldf("select categoria, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by categoria
+        order by categoria") %>%
+  ggplot(aes(x = reorder(categoria, -total_ventas), y = total_ventas, fill = categoria)) +  geom_col(position = "dodge") +
+  labs(title = "Total ventas por categoria (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**La Categoria con mayor venta es la Tecnologica, seguida por muebles y material de oficina respectivamente**
+
+### 5.14.- Visualicemos el total de las ganancias por categoria (2011 - 2014)
+
+```{r}
+  sqldf("select categoria, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by categoria
+        order by categoria") %>%
+  ggplot(aes(x = reorder(categoria, -total_ganancias), y = total_ganancias, fill = categoria)) + geom_col(position = "dodge") +
+  labs(title = "Total ganancias por categoria (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**La Categoria con mayor ganancia es la Tecnologica, sin embargo las ganancias por materiales de oficina superaron las ganancias por muebles a pesar de que estos tuvieron mayores ventas.**
+
+### 5.15.- Visualicemos el total de las ventas por ano por cada categoria
+
+```{r}
+  sqldf("select categoria, ano, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by categoria, ano
+        order by categoria, ano") %>%
+  ggplot(aes(x = ano, y = total_ventas, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~categoria) + coord_flip() +
+  labs(title = "Total ventas por año por cada categoria", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se observa un crecimiento anual de las ventas en todas las categorias, siendo lideradas por tecnologia y seguida por muebles**
+
+### 5.16.- Visualicemos el total de las ganancias por ano por cada categoria
+
+```{r}
+  sqldf("select categoria, ano, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by categoria, ano
+        order by categoria, ano") %>%
+  ggplot(aes(x = ano, y = total_ganancias, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~categoria) + coord_flip() +
+  labs(title = "Total ganancias por año por cada categoria", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**Se observa un crecimiento anual de las ganancias en todas las categorias, siendo lideradas por tecnologia, seguida por Materiales de Oficina**
+
+
+### 5.17.- Visualicemos el total de las ventas por sub_categoria (2011 - 2014)
+
+```{r}
+  sqldf("select sub_categoria, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by sub_categoria
+        order by sub_categoria") %>%
+  ggplot(aes(x = reorder(sub_categoria, -total_ventas), y =total_ventas, fill = sub_categoria)) +  
+  geom_col(position = "dodge") + theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Total ventas por sub_categoria (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="Sub_categoria") 
+```
+
+**La sub-categoria con mayor ventas es la de telefonos, seguida por copidoras y sillas**
+
+
+### 5.18.- Visualicemos el total de las ganancias por sub-categoria (2011 - 2014)
+
+```{r}
+  sqldf("select sub_categoria, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by sub_categoria
+        order by sub_categoria") %>%
+  ggplot(aes(x = reorder(sub_categoria, -total_ganancias), y = total_ganancias, fill = sub_categoria)) +  theme(axis.text.x= element_text(angle = 90)) +
+  geom_col(position = "dodge") +
+  labs(title = "Total ganancias por sub_categoria (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="Sub_categoria") 
+```
+
+**La sub-categoria con mayor ganancias es la de copidoras, seguida por telefonos y libreros. Mientras las mesas tuvieron perdidas por mas de 50.000**
+
+### 5.19.- Visualicemos el total de las ventas por ano por cada sub_categoria
+
+```{r}
+  sqldf("select sub_categoria, ano, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by sub_categoria, ano
+        order by sub_categoria, ano") %>%
+  ggplot(aes(x = ano, y = total_ventas, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~sub_categoria) + coord_flip() +
+  labs(title = "Total ventas por año por cada sub_categoria", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**En todas las sub-categorias se observa un crecimiento anual de las ventas, siendo lideradas por los telefonos**
+
+### 5.20.- Visualicemos el total de las ganancias por ano por cada sub-categoria
+
+```{r}
+  sqldf("select sub_categoria, ano, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by sub_categoria, ano
+        order by sub_categoria, ano") %>%
+  ggplot(aes(x = ano, y = total_ganancias, fill = ano)) +  geom_col(position = "dodge") +
+  facet_wrap(~sub_categoria) + coord_flip() +
+  labs(title = "Total ganancias por año por cada sub_categoria", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**En la mayoria de las sub-categorias se observa un crecimiento muy leve de las ganancias los primeros 2 anos, presentando una recuperacion en las mismas los anos 2013-2014.**
+**En cuanto a la sub-categoria Mesas, presenta perdidas desde su inicio, hubo una disminucion de las perdidas en el 2012, sin embargo luego se incrementa sustancialmente en los anos 2013-2014**
+
+
+### 5.21.- Paises con mayores Ventas en el periodo 2011-2014 (Top 15)
+
+```{r}
+ sqldf("select pais, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by pais
+        order by total_ventas DESC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(pais, total_ventas), y=total_ventas, fill = pais)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Paises con mayores ventas (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ventas (2011-2014)") 
+```
+
+**Los paises con mayores ventas tenemos EEUU, Australia y Francia respectivamente**
+
+### 5.22.- Paises con mayores ganancias en el periodo 2011-2014 (Top 15)
+
+```{r}
+ sqldf("select pais, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by pais
+        order by total_ganancias DESC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(pais, total_ganancias), y=total_ganancias, fill = pais)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Paises con mayores ganancias (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ganancias (2011-2014)") 
+```
+
+**Los paises con mayores ganancias tenemos EEUU, China e India respectivamente**
+
+### 5.23.- Paises con menores Ventas en el periodo 2011-2014 (Top 15)
+
+```{r}
+ sqldf("select pais, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by pais
+        order by total_ventas ASC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(pais, -total_ventas), y=total_ventas, fill = pais)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Paises con menores ventas (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ventas (2011-2014)") 
+```
+
+**En cuanto a los paises con menores ventas tenemos a Guinea Ecuatorial, Armenia y Eritrea, respecivamente**
+
+
+### 5.24.- Paises con menores ganancias en el periodo 2011-2014 (Top 15)
+
+```{r}
+ sqldf("select pais, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by pais
+        order by total_ganancias ASC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(pais, total_ganancias), y=total_ganancias, fill = pais)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Paises con menores ganancias (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ganancias (2011-2014)") 
+```
+
+**En cuanto a los paises con menores ganancias tenemos a Irlanda, Republica Dominicana y Portugal,  respecivamente**
+
+
+### 5.25.- Analisemos las ventas y ganancias por mes durante los anos 2011-2014
+
+```{r}
+resumen_por_ano_mes <- datos_supermercado1 %>% 
+  group_by(ano_mes) %>%  #agrupado por ano y mes del ano
+  summarise(total_ventas = sum(ventas), total_ganancias = sum(ganancia)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(ano_mes)# ordenado por tipo de usuario y mes del ano
+  
+resumen_por_ano_mes
+```
+
+
+### 5.26.- Visualicemos el comportamiento de las ventas por mes (2011 - 2014)
+
+```{r}
+resumen_por_ano_mes %>% 
+  ggplot(aes(x = ano_mes, y = total_ventas, group=1)) +  
+  geom_line () +   geom_point() + geom_smooth() + 
+  theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Comportamiento de las ventas por mes (2011 - 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**El comportamiento de las ventas por mes muestra una tendencia crerciente a lo largo de los anos**
+
+
+### 5.27.- Visualicemos el comportamiento de las ganancias por mes (2011 - 2014)
+
+```{r}
+resumen_por_ano_mes %>% 
+  ggplot(aes(x = ano_mes, y = total_ganancias, group=1)) +  
+  geom_line () +   geom_point() + geom_smooth() + 
+  theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Comportamiento de las ganancias por mes", 
+       caption = "Analisis realizado por Ing. Hernan Lugo") 
+```
+
+**El comportamiento de las ganancias por mes muestra una tendencia crerciente a lo largo de los anos**
+
+
+### 5.28.- Comportamiento de las ventas por mes para cada ano
+
+```{r}
+sqldf("select ano, mes, mes_abr, sum(ventas) as total_ventas from datos_supermercado1
+        group by ano, mes
+        order by ano, mes")  %>%
+  ggplot(aes(x = mes_abr, y = total_ventas, group = ano)) +  geom_line (aes(color = ano)) + 
+  labs(title = "Comportamiento de las ventas por mes para cada ano", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="mes") 
+```
+
+**Se observa como cada ano han ido aumentado las ventas, el comportamiento mensual se mantiene a lo largo de los anos, sin embargo en el 2014 el mes con mayores ventas fue noviembre.**
+
+
+### 5.29.- Comportamiento de las ganancias por mes para cada ano
+
+```{r}
+sqldf("select ano, mes, mes_abr, sum(ganancia) as total_ganancias from datos_supermercado1
+        group by ano, mes
+        order by ano, mes")  %>%
+  ggplot(aes(x = mes_abr, y = total_ganancias, group = ano)) +  geom_line (aes(color = ano, )) +
+  labs(title = "Comportamiento de las ganancias por mes para cada ano", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="mes") 
+```
+
+**Se observa como cada ano han ido aumentando las ganancias, sin embargo en el 2014 el mes mas rentable fue septiembre y no el mes de diciembre como venia sucediendo.**
+
+
+### 5.30.- Veamos cuales son los meses con mayor venta
+
+
+```{r}
+  sqldf("select mes_abr, sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by mes_abr
+        order by mes_abr") %>%
+  ggplot(aes(x = mes_abr, y = total_ventas, group=1)) +  geom_line () +
+  geom_point() + geom_smooth() + theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Acumulado de Ventas por Mes (2011 _ 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Mes", y= "Total Ventas   2011-2014") 
+```
+
+**Vemos que el mes con mayor venta es Diciembre**
+
+
+### 5.31.- Veamos cuales son los meses con mayor Ganancia
+
+
+```{r}
+  sqldf("select mes_abr, sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by mes_abr
+        order by mes_abr") %>%
+  ggplot(aes(x = mes_abr, y = total_ganancias, group=1)) +  geom_line () +
+  geom_point() + geom_smooth() + theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Acumulado de Ganancias por Mes (2011 _ 2014)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Mes", y= "Total Ganancias   2011-2014") 
+```
+
+**Vemos que el mes con mayor ganancias es Noviembre**
+
+
+### 5.32.- Cuales son los 15 primeros productos con mayores Ventas en el periodo 2011-2014
+
+```{r}
+ sqldf("select id_producto, nombre_producto,  sum(ventas) as total_ventas
+        from datos_supermercado1
+        group by id_producto
+        order by total_ventas DESC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(id_producto, total_ventas), y=total_ventas, fill = id_producto)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Productos con mayores ventas (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ventas (2011-2014)") 
+```
+
+### 5.33.- Cuales son los 15 primeros productos con mayores ganancias en el periodo 2011-2014
+
+```{r}
+ sqldf("select id_producto, nombre_producto,  sum(ganancia) as total_ganancias
+        from datos_supermercado1
+        group by id_producto
+        order by total_ganancias DESC
+       LIMIT 15
+       ") %>%
+      ggplot(aes(x=reorder(id_producto, total_ganancias), y=total_ganancias, fill = id_producto)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      labs(title = "Productos con mayores ganancias (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Producto", 
+       y= "Total Ganancias (2011-2014)") 
+```
+
+
+
+## 6.- Actuar
+
+### 6.1.- CONCLUSIONES
+
+*Hubo una ganancia de 11.6% durante el periodo de 2011-2014, lo que corresponde a un total de 1.467.457,29$
+
+*Se nota un crecimiento exponencial tanto de las ventas como de las ganancias entre los anos 2011-2014
+
+*Todos los segmentos han tenido un crecimiento anual en sus ventas y ganancias, siendo estas lideradas por el sector consumidor
+
+*El mercado con mayores ventas y ganancias es el Asia_Pacifico (APAC), seguido por Europa y Estados Unidos, respectivamente
+
+*Se observa un crecimiento de las ventas  y ganancias por ano, para cada uno de los mercados, siendo liderado por APAC.
+
+*La Categoria con mayor venta es la Tecnologica, seguida por muebles y material de oficina respectivamente
+
+*La Categoria con mayor ganancia es la Tecnologica, sin embargo las ganancias por materiales de oficina superaron las ganancias por muebles a pesar de que estos tuvieron mayores ventas.
+
+*Se observa un crecimiento anual de las ventas en todas las categorias, siendo lideradas por tecnologia y seguida por muebles. En cuanto a las ganancias, se observa un crecimiento anual de las mismas en todas las categorias, siendo lideradas por tecnologia, seguida por Materiales de Oficina
+
+*La sub-categoria con mayor ventas es la de telefonos, seguida por copidoras y sillas. En cuanto a las ganancias, la sub-categoria que lidera la misma es la de copidoras, seguida por telefonos y libreros. Mientras las Tables tuvieron perdidas por mas de 50.000$
+
+*En todas las sub-categorias se observa un crecimiento anual de las ventas, siendo lideradas por los telefonos. En cuanto a las ganancias, en la mayoria de las sub-categorias se observa un crecimiento muy leve de las mismas los primeros 2 anos, presentando una recuperacion en los anos 2013-2014.
+
+*En cuanto a la sub-categoria Tables, presenta perdidas desde su inicio, hubo una disminucion de las perdidas en el 2012, sin embargo luego se incrementa sustancialmente en los anos 2013-2014
+
+*Los paises con mayores ventas (TOP 3)  tenemos EEUU, Australia y Francia respectivamente
+
+*Los paises con mayores ganancias (TOP 3) tenemos EEUU, China e India respectivamente
+
+*Tambien tenemos que los paises con menores ventas son Guinea Ecuatorial, Armenia y Eritrea, respecivamente. Mientras que los paises con menores ganancias son Irlanda, Republica Dominicana y Portugal,  respecivamente
+
+*El comportamiento de las ventas y las ganancias por mes, muestra una tendencia crerciente a lo largo de los anos
+
+*Se observa como cada ano ha ido aumentado las ventas, el comportamiento mensual se mantiene a lo largo de los anos, sin embargo en el 2014 el mes con mayores ventas fue noviembre. En cuanto a las ganancias podemos observar como cada ano han ido aumentando las mismas, sin embargo en el 2014 el mes mas rentable fue septiembre y no el mes de diciembre como venia sucediendo.
+
+*Vemos que el mes con mayor venta es Diciembre y el mes con mayor ganancia es Noviembre
+
+*Productos que generaron mayores ventas: Copiadora avanzada Canon imageCLASS 2200, seguido por Teléfono inteligente Nokia, con identificador de llamadas
+
+*Productos que generaron mayores ganancias: Copiadora avanzada Canon imageCLASS 2200, seguido por Estufa Hoover, Roja
+
+
+### 6.2.- RECOMENDACIONES
+
+1.- Promover una estrategia de Marketing en los paises con menores ventas con el fin de aumentar las ganancias y disminuir o erradicar las perdidas.
+
+2.- En lo que se refiere a la Sub-categoria Tables, promover una estrategia de mercado para aumentar sus ventas y revisar su estructura de costos con el fin de mejorar sus ganancias y erradicar las perdidas.
+
+
+
+
+
+
+
