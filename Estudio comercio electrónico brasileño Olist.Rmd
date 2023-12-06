@@ -1,0 +1,957 @@
+---
+title: "Estudio comercio electrónico brasileño Olist"
+author: "Hernan"
+date: "2023-10-29"
+output: html_document
+---
+
+# ¿Cómo puede un  comercio electronico jugar de manera inteligente?  
+
+## 1.- Acerca de la empresa 
+
+Olist Store, los grandes almacenes más grandes de los mercados brasileños, conecta pequeñas empresas de todo Brasil con canales sin complicaciones y con un único contrato. Esos comerciantes pueden vender sus productos a través de la tienda Olist y enviarlos directamente a los clientes utilizando los socios logísticos de Olist.
+
+Después de que un cliente compra el producto en Olist Store, se notifica al vendedor para que complete ese pedido. Una vez que el cliente recibe el producto, o vence la fecha estimada de entrega, el cliente recibe una encuesta de satisfacción por correo electrónico donde puede dar una nota de la experiencia de compra y anotar algunos comentarios
+
+
+## 2.- Definición del problema:
+
+Contamos con un conjunto de datos que posee información de 100.000 pedidos de 2016 a 2018 realizados en múltiples mercados de Brasil. Sus características permiten ver un pedido desde múltiples dimensiones: desde el estado del pedido, el precio, el pago y el rendimiento del flete hasta la ubicación del cliente, los atributos del producto y finalmente las reseñas escritas por los clientes. También publicamos un conjunto de datos de geolocalización que relaciona los códigos postales brasileños con las coordenadas de latitud/longitud.
+
+Vamos a realizar un estudio detallado sobre los datos en cuestion, cuyo propósito es ayudar a  obtener una comprensión más profunda del panorama del comercio electrónico en Brasil e identificar oportunidades de crecimiento y optimización.
+
+
+## 3.- Fuentes de Datos utilizados:
+
+Para este desafío, el conjunto de datos utilizado se obtuvo del sitio web de KAGGLE . Comprende datos de alrededor de 100.000 pedidos realizados entre 2016 y 2018 en varios mercados de Brasil.
+
+
+### 3.1 Cargamos e Instalamos los paquetes necesarios para el estudio
+
+
+```{r}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(skimr)
+library(janitor)
+library(here)
+library(lubridate) # para formatos de fechas y horas
+library(ggplot2)  # Para crear Visualizaciones
+library(sqldf)  # para correr sql en R
+library(tidyr)
+library(ggpubr)  # para crear y personalizar ggplot2
+library(scales)  #escalado utilizado por ggplots
+library(stringr) #limpieza de datos
+library(tsibble)
+
+```
+
+
+### 3.2.- Procedemos a cargar los archivos .csv que utilizaremos para el estudio.
+
+
+```{r}
+clientes <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_customers_dataset.csv")
+geolocalizacion <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_geolocation_dataset.csv")
+articulos_pedidos <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_order_items_dataset.csv")
+pagos_de_pedidos <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_order_payments_dataset.csv")
+revisiones_de_pedidos <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_order_reviews_dataset.csv")
+pedidos <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_orders_dataset.csv")
+productos <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_products_dataset.csv")
+vendedores <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/olist_sellers_dataset.csv")
+traduccion_categoria_producto <- read_csv("~/ESTUDIO DE CASO/Estudio comercio electrónico brasileño Olist/Datos originales/product_category_name_translation.csv")
+```
+
+
+### 3.3.- Revisemos la estructura de datos de cada uno de los archivos
+
+
+```{r}
+colnames(clientes)
+colnames(geolocalizacion)
+colnames(articulos_pedidos)
+colnames(pagos_de_pedidos)
+colnames(revisiones_de_pedidos)
+colnames(pedidos)
+colnames(productos)
+colnames(vendedores)
+colnames(traduccion_categoria_producto)
+```
+
+
+#### 3.3.1 clientes
+
+```{r}
+glimpse(clientes)
+```
+
+
+#### 3.3.2 geolocalizacion
+
+```{r}
+glimpse(geolocalizacion)
+```
+
+#### 3.3.3 articulos_pedidos
+
+```{r}
+glimpse(articulos_pedidos)
+```
+
+#### 3.3.4 pagos_de_pedidos
+
+```{r}
+glimpse(pagos_de_pedidos)
+```
+
+#### 3.3.5 revisiones_de_pedidos
+
+```{r}
+glimpse(revisiones_de_pedidos)
+```
+
+#### 3.3.6 pedidos
+
+```{r}
+glimpse(pedidos)
+```
+
+#### 3.3.7 productos
+
+```{r}
+glimpse(productos)
+```
+
+#### 3.3.8 vendedores
+
+```{r}
+glimpse(vendedores)
+```
+
+#### 3.3.9 traduccion_categoria_producto
+
+```{r}
+glimpse(traduccion_categoria_producto)
+```
+
+## 4.- Procesar
+
+### 4.1.-  Estandarizamos el nombre de las columnas de nuestros dataframe para su mejor comprension
+
+#### 4.1.1- clientes
+
+```{r}
+clientes1 <- clientes %>%
+  rename(id_cliente = "customer_id", id_unica_cliente = "customer_unique_id", 
+         codigo_postal_cliente = "customer_zip_code_prefix", ciudad_cliente = "customer_city",
+         estado_cliente = "customer_state")
+
+colnames(clientes1)
+```
+
+#### 4.1.2- geolocalizacion
+
+```{r}
+geolocalizacion1 <- geolocalizacion %>%
+  rename(codigo_postal_geolocalizacion = "geolocation_zip_code_prefix", 
+         latitud = "geolocation_lat", longitud = "geolocation_lng", 
+         ciudad_geolocalizacion = "geolocation_city",
+         estado_geolocalizacion = "geolocation_state")
+
+colnames(geolocalizacion1)
+```
+
+#### 4.1.3- articulos_pedidos
+
+```{r}
+articulos_pedidos1 <- articulos_pedidos %>%
+  rename(id_pedido = "order_id", id_articulo_pedido = "order_item_id", 
+         id_producto = "product_id", id_vendedor = "seller_id",
+         fecha_limite_envio = "shipping_limit_date", precio = "price", 
+         valor_flete = "freight_value")
+
+colnames(articulos_pedidos1)
+```
+
+
+#### 4.1.4- pagos_de_pedidos
+
+```{r}
+pagos_de_pedidos1 <- pagos_de_pedidos %>%
+  rename(id_pedido = "order_id", pago_secuencial = "payment_sequential", 
+         tipo_pago = "payment_type", pago_plazos = "payment_installments",
+         valor_pago = "payment_value")
+
+colnames(pagos_de_pedidos1)
+```
+
+#### 4.1.5- revisiones_de_pedidos
+
+```{r}
+revisiones_de_pedidos1 <- revisiones_de_pedidos %>%
+  rename(id_revision = "review_id", id_pedido = "order_id", puntaje_revision = "review_score", 
+         titulo_comentario = "review_comment_title", mensaje_comentario = "review_comment_message",
+         fecha_creacion_resena = "review_creation_date", 
+         marca_tiempo_respuesta = "review_answer_timestamp")
+
+colnames(revisiones_de_pedidos1)
+```
+
+#### 4.1.6- pedidos
+
+```{r}
+pedidos1 <- pedidos %>%
+  rename(id_pedido = "order_id", id_cliente = "customer_id", 
+         estado_del_pedido = "order_status", 
+         fecha_compra_pedido = "order_purchase_timestamp", 
+         fecha_aprobacion_pedido = "order_approved_at",
+         fecha_entrega_pedido_transporte = "order_delivered_carrier_date",
+         fecha_entrega_pedido_cliente = "order_delivered_customer_date",
+         fecha_estimada_entrega_pedido = "order_estimated_delivery_date")
+
+colnames(pedidos1)
+```
+
+#### 4.1.7- productos
+
+```{r}
+productos1 <- productos %>%
+  rename(id_producto = "product_id", nombre_categoria_producto = "product_category_name",
+         longitud_nombre_producto = "product_name_lenght",
+         longitud_descripcion_producto = "product_description_lenght",
+         cantidad_fotos_producto = "product_photos_qty", 
+         peso_producto_g = "product_weight_g",
+         longitud_producto_cm = "product_length_cm",
+         altura_producto_cm = "product_height_cm",
+         ancho_producto_cm = "product_width_cm")
+
+colnames(productos1)
+```
+
+#### 4.1.8- vendedores
+
+```{r}
+vendedores1 <- vendedores %>%
+  rename(id_vendedor = "seller_id", codigo_postal_vendedor = "seller_zip_code_prefix",
+         ciudad_vendedor = "seller_city", estado_vendedor = "seller_state")
+
+colnames(vendedores1)
+```
+
+#### 4.1.9- traduccion_categoria_producto
+
+```{r}
+traduccion_categoria_producto1 <- traduccion_categoria_producto %>%
+  rename(categoria_producto = "product_category_name", 
+         categoria_producto_ingles = "product_category_name_english")
+
+colnames(traduccion_categoria_producto1)
+```
+
+### 4.2.- Comenzar el proceso de limpieza de datos, como limpiar algunas columnas de nuestros dataframe, eliminando caracteres especiales y espacios en blanco que puedan existir.
+
+**Para ello utilizaremos las siguientes funciones**
+
+# La funcion iconv(cadena, to = "ASCII//TRANSLIT") elimina los acentos
+# La funcion str_replace_all(X, "[^[:alnum:][:space:]]", " ") elimina los caracteres especiales
+# La funcion str_replace(X, "\\s{2,}", " ") elimina los espacios en blanco inicial, final y excedentes en la cadena
+
+#### 4.2.1- Comenzamos con Clientes, donde limpiaremos las columnas ciudad_cliente y estado_cliente. 
+
+```{r}
+# Limpiamos la columna ciudad_cliente, donde eliminaremos acentos y cualquier caracter especial que exista
+
+clientes1$ciudad_cliente <- str_replace(str_trim(str_replace_all(iconv(clientes1$ciudad_cliente, to = "ASCII//TRANSLIT"), "[^[:alnum:][:space:]]", " ")),"\\s{2,}", " ")
+
+# Limpiamos la columna estado_cliente de posibles espacios en blanco existentes
+
+clientes1$estado_cliente <- str_trim(clientes1$estado_cliente)
+```
+
+#### 4.2.2- Seguimos con geolocalizacion, donde limpiaremos las columnas ciudad_geolocalizacion y estado_geolocalizacion.
+
+```{r}
+# Limpiamos la columna ciudad_geolocalizacion, donde eliminaremos acentos y cualquier caracter especial que exista
+
+geolocalizacion1$ciudad_geolocalizacion <- str_replace(str_trim(str_replace_all(iconv(geolocalizacion1$ciudad_geolocalizacion, to = "ASCII//TRANSLIT"), "[^[:alnum:][:space:]]", " ")),"\\s{2,}", " ")
+
+# Limpiamos la columna estado_geolocalizacion de posibles espacios en blanco existentes
+
+geolocalizacion1$estado_geolocalizacion <- str_trim(geolocalizacion1$estado_geolocalizacion)
+```
+
+#### 4.2.3- Procedemos con vendedores, donde limpiaremos las columnas ciudad_vendedor y estado_vendedor.
+
+```{r}
+# Limpiamos la columna ciudad_vendedor, donde eliminaremos acentos y cualquier caracter especial que exista
+
+vendedores1$ciudad_vendedor <- str_replace(str_trim(str_replace_all(iconv(vendedores1$ciudad_vendedor, to = "ASCII//TRANSLIT"), "[^[:alnum:][:space:]]", " ")),"\\s{2,}", " ")
+
+# Limpiamos la columna estado_vendedor de posibles espacios en blanco existentes
+
+vendedores1$estado_vendedor <- str_trim(vendedores1$estado_vendedor)
+```
+
+
+### 4.3.- Pasamos todas las fechas a formato Date.
+
+```{r}
+pedidos1$fecha_compra_pedido <- ymd_hms(pedidos1$fecha_compra_pedido)
+pedidos1$fecha_aprobacion_pedido <- ymd_hms(pedidos1$fecha_aprobacion_pedido)
+pedidos1$fecha_entrega_pedido_transporte <- ymd_hms(pedidos1$fecha_entrega_pedido_transporte)
+pedidos1$fecha_entrega_pedido_cliente <- ymd_hms(pedidos1$fecha_entrega_pedido_cliente)
+pedidos1$fecha_estimada_entrega_pedido <- ymd(pedidos1$fecha_estimada_entrega_pedido)
+revisiones_de_pedidos1$fecha_creacion_resena <- ymd_hms(revisiones_de_pedidos1$fecha_creacion_resena)
+revisiones_de_pedidos1$marca_tiempo_respuesta  <- ymd_hms(revisiones_de_pedidos1$marca_tiempo_respuesta)
+articulos_pedidos1$fecha_limite_envio <- ymd_hms(articulos_pedidos1$fecha_limite_envio)
+head(pedidos1)
+head(revisiones_de_pedidos1)
+head(articulos_pedidos1)
+```
+
+### 4.4.-  Revisamos la existencia de duplicados
+
+```{r}
+sum(duplicated(clientes1))
+sum(duplicated(geolocalizacion1))
+sum(duplicated(articulos_pedidos1))
+sum(duplicated(pagos_de_pedidos1))
+sum(duplicated(revisiones_de_pedidos1))
+sum(duplicated(pedidos1))
+sum(duplicated(productos1))
+sum(duplicated(vendedores1))
+sum(duplicated(traduccion_categoria_producto1))
+```
+* **Vemos la existencia de duplicados en el Dataframe geolocalizacion1, procederemos a eliminar esos duplicados**
+
+
+### 4.5.-  Eliminamos los duplicados existentes
+
+```{r}
+geolocalizacion1 <- unique(geolocalizacion1)
+sum(duplicated(geolocalizacion1))
+```
+
+### 4.6.- Agregamos a nuestro nuevo Data Frame cuatro nuevas columnas, donde tendremos por separado el **ano**, **mes**, **dia ** y **ano-mes** de la fecha_compra_pedido, ademas agregaremos la **abreviatura del mes** y el **dia de la semana**. Por ultimo agregaremos una nueva columna que contemple el **tiempo en dias** que se tarda en realizar el envio desde que se emite la orden 
+
+```{r}
+pedidos1 <- pedidos1 %>%
+  arrange(desc(fecha_compra_pedido)) %>%
+  mutate(
+    ano_compra_pedido = as.integer(year(fecha_compra_pedido)),
+    mes_compra_pedido = month(fecha_compra_pedido),
+    dia_compra_pedido = mday(fecha_compra_pedido),
+    ano_mes_compra_pedido = format(as.Date(fecha_compra_pedido), "%Y-%m"),
+    mes_abr_compra_pedido = month(fecha_compra_pedido, label = TRUE, abbr = TRUE),
+    dia_semana_compra_pedido = wday(fecha_compra_pedido, label = TRUE, abbr = FALSE),
+    tiempo_envio = as.numeric(difftime(fecha_entrega_pedido_cliente, fecha_compra_pedido, units= "days")))
+    
+head(pedidos1)
+```
+
+## 5.-  Comenzamos el proceso de Analisis Descriptivo **(Analizar y Compartir)**
+
+### 5.1.-  Analisis de algunas estadísticas de resumen rápido que nos gustaría saber sobre nuestro marco de datos
+
+#### 5.1.1- clientes
+
+```{r}
+clientes1 %>%  
+  select(id_cliente, id_unica_cliente, codigo_postal_cliente, 
+         ciudad_cliente, estado_cliente) %>%
+  summary()
+```
+
+#### 5.1.2- geolocalizacion
+
+```{r}
+geolocalizacion1 %>%  
+  select(codigo_postal_geolocalizacion, latitud, longitud, 
+         ciudad_geolocalizacion, estado_geolocalizacion) %>%
+  summary()
+```
+
+#### 5.1.3- articulos_pedidos1
+
+```{r}
+articulos_pedidos1 %>%  
+  select(id_pedido, id_articulo_pedido, id_producto, id_vendedor, 
+         fecha_limite_envio, precio, valor_flete) %>%
+  summary()
+```
+
+#### 5.1.4- pagos_de_pedidos1
+
+```{r}
+pagos_de_pedidos1 %>%  
+  select(id_pedido, pago_secuencial, tipo_pago, pago_plazos, valor_pago) %>%
+  summary()
+```
+#### 5.1.5- revisiones_de_pedidos1
+
+```{r}
+revisiones_de_pedidos1 %>%  
+  select(id_revision, id_pedido, puntaje_revision, titulo_comentario, 
+         mensaje_comentario, fecha_creacion_resena, marca_tiempo_respuesta) %>%
+  summary()
+```
+
+#### 5.1.6- pedidos1
+
+```{r}
+pedidos1 %>%  
+  select(id_pedido, id_cliente, estado_del_pedido, fecha_compra_pedido,
+         fecha_aprobacion_pedido, fecha_entrega_pedido_transporte,
+         fecha_entrega_pedido_cliente,    fecha_estimada_entrega_pedido) %>%
+  summary()
+```
+
+* **Podemos ver la existencia de algunos datos nulos o perdidos en las variables fecha_aprobacion_pedido, fecha_entrega_pedido_transporte y fecha_entrega_pedido_cliente**
+
+#### 5.1.7- productos1
+
+```{r}
+productos1 %>%  
+  select(id_producto, nombre_categoria_producto, longitud_nombre_producto,
+         longitud_descripcion_producto, cantidad_fotos_producto, peso_producto_g,
+         longitud_producto_cm, altura_producto_cm, ancho_producto_cm) %>%
+  summary()
+```
+* **De los 32951 productos, vemos que 610 de ellos tienen datos nulos o vacios en las variables: longitud_nombre_producto, longitud_descripcion_producto, cantidad_fotos_producto. Adicionalmente existen 2 productos con datos nulos o vacios en las variables peso_producto_g, longitud_producto_cm, altura_producto_cm y ancho_producto_cm**
+
+
+#### 5.1.8- vendedores1
+
+```{r}
+vendedores1 %>%  
+  select(id_vendedor, codigo_postal_vendedor, ciudad_vendedor, estado_vendedor) %>%
+  summary()
+```
+
+#### 5.1.9- traduccion_categoria_producto1
+
+```{r}
+traduccion_categoria_producto1 %>%  
+  select(categoria_producto, categoria_producto_ingles) %>%
+  summary()
+```
+
+### 5.2.- Revisemos cual es el total de ingresos generados por la empresa Olist en el transcurso de estos años
+
+```{r}
+sqldf("select sum(valor_pago) as total_ingresos from pagos_de_pedidos1")
+```
+
+* **El total de ingresos generados en estos años por la empresa Olist es de 16.008.872**
+
+
+### 5.3.-  Veamos como ha sido el comportamiento anual de los ingresos en el transcurso de estos años.
+
+```{r}
+right_join(pedidos1, pagos_de_pedidos1, by = "id_pedido") %>%
+                   select(ano_compra_pedido, valor_pago) %>%
+                   group_by(ano_compra_pedido) %>%
+                   summarise(total_ingresos = sum(valor_pago)) %>%  
+                   arrange(ano_compra_pedido) %>%
+                   ggplot(aes(x = ano_compra_pedido, y = total_ingresos, 
+                  fill = as.character(ano_compra_pedido))) +  
+                  geom_col(position = "dodge") + 
+                  geom_text(aes(label = percent(total_ingresos/sum(total_ingresos)), 
+                                precision=1 ), vjust = -1, colour = "black") + #Permite                    etiquetar los valores dentro o sobre las barras
+                  ylim(c(0, 9000000)) + #Aumente los límites del eje Y si es necesario
+                  labs(title = "Total Ingresos por año", 
+                       caption = "Analisis realizado por Ing. Hernan Lugo", 
+                       x = "año", fill = "") 
+
+```
+* **Del total de ingresos (16.008.872) obtenidos por la empresa Olist en estos años, podemos ver que un 45,3% corresponde al año 2017 y un 54,3% al 2018.**
+
+
+### 5.4.-  Veamos como ha sido el comportamiento mensual de los ingresos en el transcurso de estos años.
+
+
+```{r}
+right_join(pedidos1, pagos_de_pedidos1, by = "id_pedido") %>%
+                   select(ano_mes_compra_pedido, valor_pago) %>%
+                   group_by(ano_mes_compra_pedido) %>%
+                   summarise(total_ingresos = sum(valor_pago)) %>%  
+                   arrange(ano_mes_compra_pedido) %>%
+                   ggplot(aes(x = ano_mes_compra_pedido, y = total_ingresos, group=1)) +
+                   geom_line () +   geom_point() + geom_smooth() + 
+                   theme(axis.text.x= element_text(angle = 90)) + 
+                   labs(title = "Comportamiento de los ingresos por mes", 
+                   caption = "Analisis realizado por Ing. Hernan Lugo", x = "año-mes") 
+```
+* **Vemos un crecimiento lineal en las ventas desde su inicio hasta agosto del 2018, despues comienza una caida vertiginosa de las mismas, llegando a los niveles de los ingresos del 2016 (su inicio).**
+
+
+### 5.5.- Comportamiento de los ingresos por mes para cada año
+
+```{r}
+tab <- right_join(pedidos1, pagos_de_pedidos1, by = "id_pedido")
+sqldf("select ano_compra_pedido, mes_compra_pedido, mes_abr_compra_pedido, sum(valor_pago) as total_ingresos from tab
+        group by ano_compra_pedido, mes_compra_pedido
+        order by ano_compra_pedido, mes_compra_pedido")  %>%
+ggplot(aes(x = mes_abr_compra_pedido, y = total_ingresos, 
+           group = ano_compra_pedido)) +  
+geom_line (aes(color = as.character(ano_compra_pedido))) + 
+labs(title = "Comportamiento de los ingresos por mes para cada año", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="mes", color = "") 
+```
+
+* **Aqui podemos observar mejor como fue el comportamiento de los ingresos por mes para cada uno de los años. Vemos como en el 2017, hubo casi un aumento permanente de los ingresos, a excepcion del mes de diciembre donde se presenta una caida de los mismos. En el año 2018 hay una subida considerable de los ingresos el cual se mantiene ligeramente constante hasta el mes de agosto, luego observamos una caida vertiginosa de estos.**
+
+
+### 5.6.- Cual es la preferencia en la forma de pago?
+
+```{r}
+sqldf("select tipo_pago, count(tipo_pago) as cantidad_pagos,
+sum(valor_pago) as total_ingresos from tab
+        group by tipo_pago
+        order by cantidad_pagos DESC") %>%
+  mutate(total_pagos = sum(cantidad_pagos)) %>%
+  group_by(tipo_pago, cantidad_pagos) %>%
+  summarise(porcentaje = scales::percent(cantidad_pagos / total_pagos)) %>%
+  arrange(desc(cantidad_pagos)) %>%
+  ggplot(aes(x = "", y = cantidad_pagos, fill = tipo_pago)) +
+  geom_col() +
+  geom_text(aes(label = porcentaje),
+            position = position_stack(vjust = 0.5), size=3) +
+  coord_polar(theta = "y") + theme_void() +
+  labs(title="Gráfico de preferencia en la forma de pago")
+  
+```
+
+* **Hay una mayor preferencia (74%), en el uso de las tarjetas de credito para cancelar los pedidos**
+
+
+### 5.7.- Cual es el grado de satisfaccion del cliente en la revision de los pedidos?. 
+
+**Para ello tenemos la siguiente puntuacion:**
+**Excelente = 5**
+**Muy bueno = 4**
+**Bueno     = 3**
+**Regular   = 2**
+**Malo      = 1**
+
+#### 5.7.1.- Creamos un nuevo Conjunto de Datos donde uniremos las tablas de pedidos1 y la tabla revisiones_de_pedidos1. 
+
+```{r}
+tab2 <- inner_join(pedidos1, revisiones_de_pedidos1, by = "id_pedido")
+tab3 <- sqldf("select ano_compra_pedido, mes_compra_pedido, mes_abr_compra_pedido,
+        dia_compra_pedido, ano_mes_compra_pedido, id_revision, puntaje_revision from tab2
+        group by ano_compra_pedido, mes_compra_pedido, ano_mes_compra_pedido, id_revision
+        order by ano_compra_pedido, mes_compra_pedido,
+        ano_mes_compra_pedido,id_revision")
+tab3
+```
+
+#### 5.7.2.- Clasificamos por grado de satisfaccion
+
+```{r}
+tab3 <- tab3 %>%
+   group_by(id_revision)  %>%
+mutate(grado_satisfaccion = case_when(
+    puntaje_revision == 5 ~ "Excelente",
+    puntaje_revision == 4 ~ "Muy bueno",
+    puntaje_revision == 3 ~ "Bueno",
+    puntaje_revision == 2 ~ "Regular",
+    puntaje_revision == 1 ~ "Malo"))
+tab3
+```
+
+#### 5.7.3.- Calculamos el porcentaje total por grado de satisfaccion
+
+```{r}
+tab4 <- tab3 %>%
+group_by(grado_satisfaccion) %>%
+  summarise(cantidad_satisfaccion = sum(n())) %>%
+  mutate(cantidad_general_satisfaccion = sum(cantidad_satisfaccion)) %>%
+  group_by(grado_satisfaccion, cantidad_satisfaccion) %>%
+  summarize(porcentaje_total = scales::percent(cantidad_satisfaccion / cantidad_general_satisfaccion))
+
+tab4  
+```
+
+#### 5.7.4.- Visualicemos el grado de satisfaccion del cliente en la revision de los pedidos
+
+```{r}
+ggplot(tab4, aes(x = "", y = cantidad_satisfaccion, fill = grado_satisfaccion)) +
+  geom_col() +
+  geom_text(aes(label = porcentaje_total),
+            position = position_stack(vjust = 0.5), size=3) +
+  coord_polar(theta = "y") + theme_void() +
+  labs(title="Grado de satisfaccion del cliente en la revision de los pedidos",fill = "grado de satisfaccion")
+```
+
+* **Tenemos un 85% de grado de satisfaccion alta, entre: excelente(58%), muy bueno(19%) y bueno(8%).** 
+
+
+### 5.8.- Grado de satisfaccion del cliente en la revision de los pedidos por mes
+
+
+```{r}
+tab5 <- tab3 %>%
+group_by(ano_mes_compra_pedido, grado_satisfaccion) %>%
+  summarise(cantidad_satisfaccion = sum(n())) %>%
+   ggplot(aes(x = ano_mes_compra_pedido, y = cantidad_satisfaccion, group = grado_satisfaccion)) +  geom_line (aes(color = grado_satisfaccion)) + 
+  theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Grado de satisfaccion del cliente en la revision de los pedidos por mes",
+       caption = "Analisis realizado por Ing. Hernan Lugo", x="año_mes", y="cantidad_clientes") 
+
+tab5
+```
+
+* **Vemos como hay un aumento en el tiempo en cada uno de los renglones del grado de satisfaccion, siendo estas lideradas y por amplia diferencia, por el renglon "Excelente", seguida por el renglon "Muy bueno", esto es hasta agosto del 2018, luego hay una caida brusca de los mismos en el mes de septiembre.* **
+
+
+### 5.9.- Revisemos cual es el total de pedidos recibidos por la empresa Olist en el transcurso de estos años
+
+```{r}
+sqldf("select count(id_pedido) as total_pedidos from pedidos1")
+```
+* **El total de pedidos recibidos en estos años por la empresa Olist es de 99.441**
+
+
+### 5.10.- Cual es el estado de los pedidos recibidos por la empresa Olist en el transcurso de estos años
+
+```{r}
+estado_pedido <- pedidos1 %>%
+  group_by(estado_del_pedido) %>%
+  summarise(total_pedidos = n()) %>%
+  group_by(estado_del_pedido, total_pedidos)
+  ggplot(estado_pedido, aes(x = estado_del_pedido, y = total_pedidos, 
+                            fill = estado_del_pedido)) +
+  geom_col() +
+  theme(legend.position = "none") + # Elimina la leyenda de las barras
+  theme(axis.text.x= element_text(angle = 90)) +
+  geom_text(aes(label = total_pedidos),
+            position = position_stack(vjust = 0.5), size=3) +
+  labs(title="Estado de los pedidos recibidos por la empresa Olist",x = "estado del pedido")
+```
+
+* **Del total de pedidos (99.441), se han estregado 96.478 lo que corresponde a un 97%, tambien vemos que estan en la fase de enviadas 1.107 pedidos (1%), mientras que en proceso y facturado tenemos 615 pedidos (0.6%).**
+
+
+### 5.11.- Cual ha sido la cantidad total de pedidos recibidos por año en la empresa Olist
+
+```{r}
+pedidos1 %>%
+  select(ano_compra_pedido, id_pedido) %>%
+  group_by(ano_compra_pedido) %>%
+  summarise(total_pedidos = n()) %>%
+  arrange(ano_compra_pedido) %>%
+  ggplot(aes(x = as.character(ano_compra_pedido), y = total_pedidos, group=1)) +
+  geom_line (color = "red") +   geom_point(color = "red") + 
+  geom_text(aes(label = total_pedidos),
+            position = position_stack(vjust = 1.05), size=3) +
+  labs(title = "Total de pedidos recibidos por año",
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "año") 
+
+```
+
+* **Podemos observar como ha sido el crecimiento vertiginoso de los pedidos de 329 el primer año (2016) a mas de 45000 pedidos en el siguiente (2017), luego vemos un crecimiento de aproximadamente el 20% para el año 2018.**
+
+
+### 5.12.- Cual ha sido la cantidad total de pedidos recibidos por mes en el transcurso de estos años
+
+```{r}
+pedidos1 %>%
+  select(ano_mes_compra_pedido, id_pedido) %>%
+  group_by(ano_mes_compra_pedido) %>%
+  summarise(total_pedidos = n()) %>%
+  arrange(ano_mes_compra_pedido) %>%
+  ggplot(aes(x = ano_mes_compra_pedido, y = total_pedidos, group=1)) +
+  geom_line () +   geom_point() + geom_smooth() + 
+  theme(axis.text.x= element_text(angle = 90)) +
+  labs(title = "Total de pedidos recibidos por mes",
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "año-mes") 
+
+```
+
+* **Desde sus inicios se mantiene una tendencia a la subida hasta marzo del 2018**
+
+### 5.13.- Veamos cuales son los meses con mayor numero de pedidos
+
+```{r}
+sqldf("select mes_compra_pedido, mes_abr_compra_pedido, count(id_pedido) as total_pedidos
+        from pedidos1
+        group by mes_compra_pedido, mes_abr_compra_pedido
+        order by mes_compra_pedido, mes_abr_compra_pedido") %>%
+  ggplot(aes(x = mes_abr_compra_pedido, y = total_pedidos, group=1)) +  geom_line () +
+  geom_point() + geom_smooth() + theme(axis.text.x= element_text(angle = 90)) + 
+  labs(title = "Acumulado de pedidos por Mes", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Mes", y= "Total Pedidos")
+```
+* **Vemos como los meses de agosto, mayo y julio respectivamente, presentan los picos mas altos, mientras que el mes de septiembre es el mas bajo, seguido de octubre y diciembre**
+
+
+### 5.14.- Categoria de productos mas vendida segun sus volumenes de venta (TOP 15)
+
+```{r}
+top_categoria <- inner_join(articulos_pedidos1, productos1 , by = "id_producto")
+sqldf("select b.categoria_producto_ingles, count(a.id_producto) as total_productos from top_categoria a
+JOIN traduccion_categoria_producto1 b ON b.categoria_producto = a.nombre_categoria_producto
+        group by b.categoria_producto_ingles
+        order by total_productos DESC
+        LIMIT 15")  %>%
+  ggplot(aes(x=reorder(categoria_producto_ingles, total_productos), y=total_productos, fill = categoria_producto_ingles)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      theme(legend.position = "none") + # Elimina la leyenda de las barras
+      labs(title = "Categoria productos con mayores ventas x volumen (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "Categoria de Producto", 
+       y= "Total Productos") 
+```
+* **Vemos que la categoria de producto con mayor volumen de ventas es la bed_bath_table con 11.115 pedidos, seguido por health_beauty con 9.670 pedidos.**
+
+
+### 5.15.- Valor promedio de pedido
+
+```{r}
+sqldf("select sum(valor_pago)/count(DISTINCT(id_pedido)) as valor_promedio_pedido from pagos_de_pedidos1")
+```
+
+* **El valor promedio de pedido en la tienda Olist es de 160,99**
+
+
+### 5.16.- Valor promedio de pedido por Categoria de producto (top 15)
+
+```{r}
+sqldf("select b.categoria_producto_ingles, (sum(a.precio)/count(DISTINCT(a.id_pedido))) as promedio_pedido from top_categoria a
+JOIN traduccion_categoria_producto1 b ON b.categoria_producto = a.nombre_categoria_producto
+        group by b.categoria_producto_ingles
+        order by promedio_pedido DESC
+        LIMIT 15") %>%
+  ggplot(aes(x=reorder(categoria_producto_ingles, promedio_pedido), y=promedio_pedido, fill = categoria_producto_ingles)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      theme(legend.position = "none") + # Elimina la leyenda de las barras
+      theme(title=element_text(size=8,face="bold")) + # Define el tamano de letra de los       titulos
+      labs(title = "Valor promedio de pedido por Categoria (Top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "categoria de producto", 
+       y= "valor promedio pedido")
+```
+
+* **El mayor valor promedio de pedido por categoria viene dado por las computadoras con 1.231,84, seguido de pequeños electrodomésticos del hogar, horno y cafetera con 632,61**
+
+
+### 5.17.- Valor promedio del flete por Categoria de producto (top 15)
+
+```{r}
+sqldf("select b.categoria_producto_ingles, (sum(a.valor_flete)/count(DISTINCT(a.id_pedido))) as promedio_flete from top_categoria a
+JOIN traduccion_categoria_producto1 b ON b.categoria_producto = a.nombre_categoria_producto
+        group by b.categoria_producto_ingles
+        order by promedio_flete DESC
+        LIMIT 15") %>%
+  ggplot(aes(x=reorder(categoria_producto_ingles, promedio_flete), y=promedio_flete, 
+             fill = categoria_producto_ingles)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      theme(legend.position = "none") + # Elimina la leyenda de las barras
+      theme(title=element_text(size=8,face="bold")) + # Define el tamano de letra de los       titulos
+      labs(title = "Valor promedio del flete por Categoria (top 15)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "categoria de producto", 
+       y= "valor promedio flete")
+```
+* **El mayor valor promedio del flete por categoria viene dado por las computadoras con 54,34, seguido de muebles de oficina con 53,87**
+
+
+### 5.18.- Ciudades con mayor numero de pedidos (top 15)
+
+```{r}
+top_ciudades <- inner_join(clientes1, pedidos1 , by = "id_cliente")
+sqldf("select ciudad_cliente, count(id_pedido) as total_pedidos from top_ciudades
+        group by ciudad_cliente
+        order by total_pedidos DESC
+        LIMIT 15") %>%
+  ggplot(aes(x=reorder(ciudad_cliente, total_pedidos ), y=total_pedidos, 
+             fill = ciudad_cliente)) + 
+            geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+            coord_flip() + # barras en horizontal
+            theme(legend.position = "none") + # Elimina la leyenda de las barras
+            labs(title = "Ciudades con mayor numero de pedidos (top 15)", 
+            caption = "Analisis realizado por Ing. Hernan Lugo", 
+            x = "Ciudad", y= "Total Pedidos") 
+            
+```
+* **Podemos ver que Sao Paulo encabeza la lista de ciudades de mayor numero de pedidos  registrados (15.540), seguida de Rio de Janeiro (6.882)**
+
+
+### 5.19.- Total Vendedores por año
+
+
+```{r}
+nro_vendedor <- inner_join(pedidos1, articulos_pedidos1, by = "id_pedido") 
+nro_vendedor <- sqldf("select ano_compra_pedido, count(DISTINCT(id_vendedor)) as total_vendedores from nro_vendedor
+      group by ano_compra_pedido")
+ggplot(nro_vendedor, aes(x = as.character(ano_compra_pedido), y = total_vendedores, 
+                         group =1)) +
+  geom_line (color = "red") + geom_point(color = "red") +
+  geom_text(aes(label = total_vendedores),
+            position = position_stack(vjust = 0.9), size=3) +
+  labs(title="Total vendedores por año en la empresa Olist",x = "año", color = "año")                   
+```
+
+* **Vemos como ha sido el crecimiento del numero de vendedores en tan poco tiempo, esto es debido a la expancion del mercado y por ende al aumento de las ventas, lo que  corresponde con el comportamiento de los pedidos por año**
+
+
+### 5.20.- Cuales son las ciudades con mayor numero de vendedores (top 10)
+
+```{r}
+sqldf("select ciudad_vendedor, count(id_vendedor) as total_vendedores from vendedores1
+      group by ciudad_vendedor
+      order by total_vendedores DESC
+      LIMIT 10") %>%
+  ggplot(aes(x=reorder(ciudad_vendedor, total_vendedores ), y=total_vendedores, 
+             fill = ciudad_vendedor)) + 
+            geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+            coord_flip() + # barras en horizontal
+            theme(legend.position = "none") + # Elimina la leyenda de las barras
+            labs(title = "Ciudades con mayor numero de vendedores (top 10)", 
+            caption = "Analisis realizado por Ing. Hernan Lugo", 
+            x = "Ciudad", y= "Total Vendedores") 
+```
+
+* **Tenemos a la ciudad de Sao Paulo con 695 vendedores, seguida por la ciudad de Curitiba con 127 vendedores y Rio de Janeiro con 97 vendedores, respectivamente.**
+
+
+### 5.21.- Total numero de clientes de Olist
+
+```{r}
+sqldf("select count(DISTINCT id_unica_cliente) as total_clientes from clientes1")
+```
+* **La empresa Olist cuenta con un total de 96.096 clientes**
+
+
+### 5.22.- Cuales son los estados con mayor numero de clientes
+
+```{r}
+sqldf("select estado_cliente, count(DISTINCT id_unica_cliente) as total_clientes from clientes1
+      group by estado_cliente
+      order by total_clientes") %>%
+   ggplot(aes(x=reorder(estado_cliente, -
+                          
+                          total_clientes ), y=total_clientes, 
+             fill = estado_cliente)) + 
+            geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+            #coord_flip() + # barras en horizontal
+            theme(legend.position = "none") + # Elimina la leyenda de las barras
+            labs(title = "Numero de clientes por Estado", 
+            caption = "Analisis realizado por Ing. Hernan Lugo", 
+            x = "Estado", y= "Total Clientes") 
+```
+
+* **Tenemos a Sao Paulo con 40.302 clientes, seguida por Rio Janeiro con 12.384 clientes y MG con 11.259 clientes.**
+
+
+### 5.23.- Productos con mayores margenes de ganancias (top20)
+
+```{r}
+sqldf("select c.categoria_producto_ingles, ROUND((sum(a.valor_pago) - (sum(b.precio) + sum(b.valor_flete))) / sum(a.valor_pago) * 100,0) as margen_ganacia from tab a
+        JOIN top_categoria b ON b.id_pedido = a.id_pedido
+        JOIN traduccion_categoria_producto1 c ON c.categoria_producto = b.nombre_categoria_producto 
+        group by 1
+        order by 2 DESC
+        LIMIT 20") %>%
+  ggplot(aes(x=reorder(categoria_producto_ingles, margen_ganacia), y=margen_ganacia, 
+             fill = categoria_producto_ingles)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      theme(legend.position = "none") + # Elimina la leyenda de las barras
+      theme(title=element_text(size=8,face="bold")) + # Define el tamano de letra de los       titulos
+      labs(title = "Productos con mayores margenes de ganancias (top20)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "producto", 
+       y= "margen de ganancia (%)")
+
+```
+
+* **El producto *fixed_telephony* posee el mayor margen de ganacia con 68%, seguido de *drinks* con 60%. En este top20 observamos que el margen de ganacias se mantiene entre el 68% y el 25%.**
+
+
+### 5.24.- Productos con menores margenes de ganancias (top20)
+
+```{r}
+sqldf("select c.categoria_producto_ingles, ROUND((sum(a.valor_pago) - (sum(b.precio) + sum(b.valor_flete))) / sum(a.valor_pago) * 100,0) as margen_ganacia from tab a
+        JOIN top_categoria b ON b.id_pedido = a.id_pedido
+        JOIN traduccion_categoria_producto1 c ON c.categoria_producto = b.nombre_categoria_producto 
+        group by 1
+        order by 2 ASC
+        LIMIT 20") %>%
+  ggplot(aes(x=reorder(categoria_producto_ingles, margen_ganacia), y=margen_ganacia, 
+             fill = categoria_producto_ingles)) +  
+      geom_bar(stat = "identity") + # se utiliza cuando tenemos 2 variables
+      coord_flip() + # barras en horizontal
+      theme(legend.position = "none") + # Elimina la leyenda de las barras
+      theme(title=element_text(size=8,face="bold")) + # Define el tamano de letra de los       titulos
+      labs(title = "Productos con mayores margenes de ganancias (top20)", 
+       caption = "Analisis realizado por Ing. Hernan Lugo", x = "producto", 
+       y= "margen de ganancia (%)")
+
+```
+
+* **En este Top 20 de productos con menores margenes de ganacias, vemos productos con perdidas que van desde -1% hasta -9% y el resto las ganacias oscilan entre 0% y 6%**
+
+
+
+## 6.- Actuar
+
+### 6.1.- CONCLUSIONES
+
+*El total de ingresos generados en estos años por la empresa Olist es de 16.008.872
+
+*Del total de ingresos (16.008.872) obtenidos por la empresa Olist, podemos ver que un 45,3% corresponde al año 2017 y un 54,3% al 2018.
+
+*Vemos un crecimiento lineal en las ventas desde su inicio hasta agosto del 2018, despues comienza una caida vertiginosa de las mismas, llegando a los niveles de los ingresos del 2016 (su inicio)
+
+*En el 2017, hubo casi un aumento permanente de los ingresos, a excepcion del mes de diciembre donde se presenta una caida de los mismos. En el año 2018 hay una subida considerable de los ingresos el cual se mantiene ligeramente constante hasta el mes de agosto, luego observamos una caida vertiginosa de estos.
+
+*Con un 74%, hay una mayor preferencia en el uso de las tarjetas de credito para cancelar los pedidos
+
+*Tenemos un 85% de grado de satisfaccion alta, entre: excelente(58%), muy bueno(19%) y bueno(8%).
+
+*Vemos un aumento progresivo en cada uno de los renglones del grado de satisfaccion, siendo estas lideradas y por amplia diferencia, por el renglon "Excelente", seguida por el renglon "Muy bueno", esto es hasta agosto del 2018, luego hay una caida brusca de los mismos en el mes de septiembre.
+
+*La empresa Olist ha recibido en estos años un total de 99.441 pedidos
+
+*Del total de pedidos (99.441), se han estregado 96.478 lo que corresponde a un 97%, tambien vemos que estan en la fase de enviadas 1.107 pedidos (1%), mientras que en proceso: facturados tenemos 615 pedidos (0.6%) y cancelados 625 pedidos (0.62%) lo cual podemos considerar que es bajo.
+
+*Observamos un crecimiento de los pedidos, de 329 el primer año (2016) a mas de 45000 pedidos en el siguiente (2017), luego vemos un crecimiento de aproximadamente el 20% para el año 2018 llegando a mas de 54.000 pedidos. Desde sus inicios se mantiene una tendencia a la subida hasta marzo del 2018.
+
+*Los meses de agosto, mayo y julio respectivamente, presentan los picos mas altos de pedidos, mientras que el mes de septiembre es el mas bajo, seguido de octubre y diciembre
+
+*La categoria de producto con mayor volumen de ventas es la "bed_bath_table" con 11.115 pedidos, seguido por "health_beauty" con 9.670 pedidos.
+
+*El valor promedio de pedido en la tienda Olist es de 160,99
+
+*El mayor valor promedio de pedido por categoria viene dado por las computadoras con 1.231,84, seguido de pequeños electrodomésticos del hogar, horno y cafetera con 632,61
+
+*El mayor valor promedio del flete por categoria viene dado por las computadoras con 54,34, seguido de muebles de oficina con 53,87
+
+*Sao Paulo encabeza la lista de ciudades de mayor numero de pedidos  registrados (15.540), seguida de Rio de Janeiro (6.882)
+
+*Vemos como ha sido el crecimiento del numero de vendedores en tan poco tiempo, de 145 en el año 2016 a 1.784 en el 2017 y para el 2018 ya contaba con 2.383 vendedores. Esto es debido a la expancion del mercado y por ende al aumento de las ventas, lo que  corresponde con el comportamiento de los pedidos por año.
+
+*Las ciudades con un mayor numero de vendedores son: Sao Paulo con 695 vendedores, seguida por la ciudad de Curitiba con 127 vendedores y Rio de Janeiro con 97 vendedores, respectivamente.
+
+*La empresa Olist cuenta con un total de 96.096 clientes, de los cuales el estado de Sao Paulo con 40.302 clientes, seguida por Rio Janeiro con 12.384 clientes y MG con 11.259 clientes. Lo que representa el 66.5% de los clientes de la empresa Olist.
+
+*El producto "fixed_telephony" posee el mayor margen de ganacia con 68%, seguido de "drinks" con 60%. En este top20 observamos que el margen de ganacias se mantiene entre el 68% y el 25%.
+
+*En el Top 20 de productos con menores margenes de ganacias, vemos productos con perdidas que van desde -1% hasta -9% y el resto las ganacias oscilan entre 0% y 6%
+
+
+### 6.2.- RECOMENDACIONES
+
+1.- Revisar la estrutuctura de costos de algunos productos con el fin de erradicar las perdidas y maximizar las ganancias, considerando incluso descontinuar aquellos que no puedan mantener un margen minimo de ganancias establecido por la empresa.
+
+2.- Promover una estrategia de Marketin con el fin de aumentar el numero de clientes en las diferentes ciudades.
+
+3.- Desarrollar una campaña o estrategia de incentivo a los vendedores de las diferentes ciudades, con el fin de aumentar el numero de clientes y por ende los pedidos, sobre todo en aquellas ciudades que actualmente tienen un menor numero de clientes.
+
+
+
+
+
+
