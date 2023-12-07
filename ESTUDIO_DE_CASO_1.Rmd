@@ -1,0 +1,534 @@
+---
+title: "Estudio de caso Cyclistic"
+author: "Hernan"
+date: "2023-05-14"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+# ¿Cómo navega una bicicleta compartida con éxito rápido?
+
+## 1.- Acerca de la empresa 
+
+En 2016, Cyclistic lanzó una exitosa oferta de bicicletas compartidas. Desde entonces, el programa ha crecido a una flota de 5,824 bicicletas que están geo rastreadas y bloqueadas en una red de 692 estaciones en todo Chicago. Las bicicletas se pueden desbloquear desde una estación y devolver a cualquier otra estación del sistema en cualquier momento. 
+
+
+Cyclistic se distingue por ofrecer también bicicletas reclinables, triciclos de mano y bicicletas de carga, lo que hace que el uso compartido de bicicletas sea más inclusivo para las personas con discapacidades y los ciclistas que no pueden usar una bicicleta estándar de dos ruedas. La mayoría de los ciclistas optan por bicicletas tradicionales; Alrededor del 8% de los pasajeros utilizan las opciones de asistencia. Los usuarios ciclistas son más propensos a viajar por placer, pero alrededor del 30% los usa para ir al trabajo todos los días. 
+
+
+Hasta ahora, la estrategia de marketing de Cyclistic se basaba en crear conciencia general y atraer a amplios segmentos de consumidores. Un enfoque que ayudó a hacer posibles estas cosas fue la flexibilidad de sus planes de precios: pases de un solo viaje, pases de día completo y membresías anuales. Los clientes que compran pases de un solo viaje o de día completo se conocen como pasajeros ocasionales. Los clientes que compran membresías anuales son miembros de Cyclistic. 
+
+### 1.1.- Equipo Ejecutivo y personal involucrado: 
+
+* **Lily Moreno:** La directora de marketing y su gerente. Moreno es responsable del desarrollo de campañas e iniciativas para promover el programa de bicicletas compartidas. Estos pueden incluir correo electrónico, redes sociales y otros canales. 
+
+* **Equipo ejecutivo ciclista:** El equipo ejecutivo notoriamente orientado a los detalles decidirá si aprueba el Programa de marketing recomendado. 
+
+* **Equipo de análisis de marketing ciclista:**  un equipo de analistas de datos que son responsables de recopilar, analizar e informar datos que ayudan a guiar la estrategia de marketing de Cyclistic. 
+
+
+## 2.- Definición del problema:
+
+**Lily Moreno**, directora de marketing cree que el éxito futuro de la compañía depende de maximizar el número de membresías anuales. Por lo tanto, su equipo quiere entender cómo los ciclistas ocasionales y los miembros anuales usan las bicicletas ciclistas de manera diferente. A partir de estos conocimientos, su equipo diseñará una nueva estrategia de marketing para convertir a los ciclistas ocasionales en miembros anuales. 
+
+
+Los analistas financieros de Cyclistic han concluido que los miembros anuales son mucho más rentables que los ciclistas ocasionales. Aunque la flexibilidad de precios ayuda a Cyclistic a atraer más clientes, Moreno cree que maximizar el número de miembros anuales será clave para el crecimiento futuro. En lugar de crear una campaña de marketing dirigida a clientes completamente nuevos, Moreno cree que hay una muy buena oportunidad de convertir a los pasajeros ocasionales en miembros. Ella señala que los ciclistas ocasionales ya conocen el programa Cyclistic y han elegido Cyclistic para sus necesidades de movilidad. 
+ 
+Moreno se ha fijado un objetivo claro: diseñar estrategias de marketing orientadas a convertir a los ciclistas ocasionales en miembros anuales. Sin embargo, para hacer eso, el equipo de analistas de marketing necesita comprender mejor cómo difieren los miembros anuales y los pasajeros ocasionales, por qué los pasajeros ocasionales comprarían una membresía y cómo los medios digitales podrían afectar sus tácticas de marketing. Moreno y su equipo están interesados en analizar los datos históricos de viajes en bicicleta de Cyclistic para identificar tendencias. 
+
+
+A partir de estos conocimientos, su equipo diseñará la nueva estrategia de marketing,  pero primero, los ejecutivos de Cyclistic deben aprobar sus recomendaciones, por lo que deben estar respaldados con información de datos convincente y visualizaciones de datos profesionales. 
+
+### 2.1.- En resumen:
+
+* Su equipo quiere entender cómo los ciclistas ocasionales y los miembros anuales usan las bicicletas ciclistas de manera diferente.
+
+* Moreno y su equipo están interesados en analizar los datos históricos de viajes en bicicleta de Cyclistic para identificar tendencias. 
+
+### 2.2.- Algunas preguntas a considerar:
+
+**Tres preguntas guiarán el futuro programa de marketing:** 
+
+1.- ¿Cómo usan las bicicletas ciclistas de manera diferente los miembros anuales y los ciclistas ocasionales? 
+2.- ¿Por qué los ciclistas ocasionales comprarían membresías anuales de Cyclistic?
+3.-¿Cómo puede Cyclistic usar los medios digitales para influir en los ciclistas ocasionales para que se conviertan en miembros? 
+
+## 3.- Fuentes de Datos utilizados:
+
+A los efectos de este estudio de caso, los datos han sido puestos a disposición por Motivate International Inc. bajo esta **licencia:**
+
+### 3.1.- Acuerdo de licencia de datos
+
+Lyft Bikes and Scooters, LLC ("Bikeshare") opera el servicio de bicicletas compartidas Divvy de la Ciudad de Chicago ("Ciudad"). Bikeshare y la Ciudad están comprometidos a apoyar el ciclismo como una opción alternativa de transporte. Como parte de ese compromiso, la Ciudad permite que Bikeshare ponga a disposición del público ciertos datos del sistema Divvy propiedad de la Ciudad ("Datos"), sujeto a los términos y condiciones de este Acuerdo de Licencia ("Acuerdo"). Al acceder o utilizar cualquiera de los Datos, usted acepta todos los términos y condiciones de este Acuerdo.
+
+* **licencia _ Bikeshare** le otorga una licencia no exclusiva, libre de regalías, limitada y perpetua para acceder, reproducir, analizar, copiar, modificar, distribuir en su producto o servicio y usar los Datos para cualquier propósito legal ("Licencia").
+
+* **Conducta Prohibida.** La Licencia no lo autoriza a realizar, y usted no realizará ni ayudará a otros a realizar, ninguna de las siguientes:
+
+
+* Usar los Datos de manera ilegal o para cualquier propósito ilegal;
+* Alojar, transmitir, publicar, distribuir, sublicenciar o vender los Datos como un conjunto de datos independiente; siempre que, sin embargo, pueda incluir los Datos como material de origen, según corresponda, en análisis, informes o estudios publicados o distribuidos con fines no comerciales;
+* Acceder a los Datos por medios distintos a la interfaz que Bikeshare proporciona o autoriza para tal fin;
+* Eludir cualquier restricción de acceso relacionada con los Datos;
+* Usar minería de datos u otros métodos de extracción en relación con el sitio web de Bikeshare o los Datos;
+* Intentar correlacionar los Datos con nombres, direcciones u otra información de clientes o Miembros de Bikeshare; y
+* Indique o insinúe que está afiliado, aprobado, respaldado o patrocinado por Bikeshare.
+* Usar o autorizar a otros a usar, sin el permiso por escrito de los propietarios correspondientes, las marcas comerciales o los nombres comerciales de Lyft Bikes and Scooters, LLC, la ciudad de Chicago o cualquier patrocinador del servicio Divvy. Estas marcas incluyen, entre otras, DIVVY y el logotipo de DIVVY, que son propiedad de la Ciudad de Chicago.
+
+* **Sin garantía.** LOS DATOS SE PROPORCIONAN "TAL CUAL", SEGÚN DISPONIBILIDAD (A DISCRECIÓN EXCLUSIVA DE BIKESHARE) Y BAJO SU PROPIO RIESGO. EN LA MEDIDA MÁXIMA PROPORCIONADA POR LA LEY, BIKESHARE NIEGA TODAS LAS GARANTÍAS, EXPLÍCITAS O IMPLÍCITAS, INCLUIDAS LAS GARANTÍAS IMPLÍCITAS DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO EN PARTICULAR Y NO VIOLACIÓN. BIKESHARE NIEGA ADEMÁS CUALQUIER GARANTÍA DE QUE LOS DATOS SATISFAGAN SUS NECESIDADES O ESTARÁN O SEGUIRÁN DISPONIBLES, COMPLETOS, PRECISOS, OPORTUNOS, SEGUROS O LIBRES DE ERRORES.
+
+* **Limitación de Responsabilidad y Pacto de No Demandar.** Bikeshare, su matriz, afiliados y patrocinadores, y sus respectivos directores, funcionarios, empleados o agentes no serán responsables a usted o a cualquier otra persona por cualquier pérdida o daño, incluidos los daños directos, indirectos, incidentales y consecuentes, ya sean previsibles o no, en función de cualquier teoría de responsabilidad, que resulte en su totalidad o en parte de su acceso o uso de los Datos . No presentará ningún reclamo por daños contra ninguna de esas personas o entidades en ningún tribunal o que surja de o esté relacionado con este Acuerdo, los Datos o su uso de los Datos. En cualquier caso, si presentara y ganara dicho reclamo, su recuperación máxima está limitada a $ 100 en total, incluso si usted o ellos hubieran sido informados de la posibilidad de que la responsabilidad exceda esa cantidad.
+
+* **Titularidad y Suministro de Datos.** La Ciudad de Chicago posee todos los derechos, títulos e intereses sobre los Datos. Bikeshare puede modificar o dejar de proporcionar parte o la totalidad de los Datos en cualquier momento, sin previo aviso, a su exclusivo criterio.
+
+* **No renuncio.** Nada en este Acuerdo es o implica una renuncia a cualquier derecho que Bikeshare o la Ciudad de Chicago tengan sobre los Datos o sobre cualquier derecho de autor, patente o marca comercial propiedad de Bikeshare, su empresa matriz, sus afiliados o patrocinadores o con licencia de ellos. Las marcas registradas DIVVY son propiedad de la Ciudad de Chicago.
+
+* **Terminación del Acuerdo.** Bikeshare puede rescindir este Acuerdo en cualquier momento y por cualquier motivo a su exclusivo criterio. La rescisión será efectiva una vez que Bikeshare le envíe un aviso por escrito a la dirección de correo electrónico que proporcionó a Bikeshare en relación con esto o mediante el anuncio de Bikeshare en su sitio web (actualmente www.divvybikes.com/data) de que está revocando todas las licencias. Las secciones 2 a 6 y 9 a 10 sobrevivirán a la rescisión.
+
+* **contacto _ ** Las preguntas relacionadas con este Acuerdo, incluidas las solicitudes de permiso para usar marcas comerciales y nombres comerciales, deben enviarse a bike-data@lyft.com.
+
+* **Ley Aplicable y Foro.** Este Acuerdo se rige por las leyes del Estado de Illinois, sin tener en cuenta los principios de conflicto de leyes. Cualquier disputa que surja en virtud o en relación con este Acuerdo se presentará únicamente en un tribunal de jurisdicción competente con sede en la ciudad de Nueva York, Nueva York.
+
+* **Acuerdo completo.** Este Acuerdo es el acuerdo y entendimiento completo y exclusivo entre Bikeshare y usted con respecto a su objeto y reemplaza todos los acuerdos o entendimientos orales o escritos anteriores o contemporáneos relacionados con el objeto.
+
+### 3.2.- Cargamos e Instalamos el paquete tidyverse
+
+Cargamos e instalamos el paquete tidyverse para luego proceder a cargar los archivos .csv que utilizaremos para el estudio.
+
+```{r}
+#install.packages("tidyverse")
+#install.packages("tsibble")
+#install.packages("zoo")
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(tidyr)
+library(tsibble)
+library(zoo)
+```
+
+### 3.3.- Procedemos a cargar los archivos .csv que utilizaremos para el estudio.
+
+```{r}
+abr_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202204-divvy-tripdata.csv")
+may_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202205-divvy-tripdata.csv")
+jun_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202206-divvy-tripdata.csv")
+jul_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202207-divvy-tripdata.csv")
+ago_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202208-divvy-tripdata.csv")
+sep_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202209-divvy-tripdata.csv")
+oct_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202210-divvy-tripdata.csv")
+nov_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202211-divvy-tripdata.csv")
+dic_2022 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202212-divvy-tripdata.csv")
+ene_2023 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202301-divvy-tripdata.csv")
+feb_2023 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202302-divvy-tripdata.csv")
+mar_2023 <- read_csv("C:/Users/Hernan Lugo/Documents/ESTUDIO DE CASO/Estudio de caso Cyclistic/DATOS_ORIGINALES/202303-divvy-tripdata.csv")
+```
+
+### 3.4.- Revisemos la estructura de datos de cada uno de los archivos
+
+#### 3.4.1.- Revisemos los nombres de las variables de cada uno de los archivos
+
+```{r}
+colnames(abr_2022)
+colnames(may_2022)
+colnames(jun_2022)
+colnames(jul_2022)
+colnames(ago_2022)
+colnames(sep_2022)
+colnames(oct_2022)
+colnames(nov_2022)
+colnames(dic_2022)
+colnames(ene_2023)
+colnames(feb_2023)
+colnames(mar_2023)
+```
+
+#### 3.4.2.- Inspeccionar los dataframes y buscar incongruencias 
+
+```{r}
+str(abr_2022)
+str(may_2022)
+str(jun_2022)
+str(jul_2022)
+str(ago_2022)
+str(sep_2022)
+str(oct_2022)
+str(nov_2022)
+str(dic_2022)
+str(ene_2023)
+str(feb_2023)
+str(mar_2023)
+```
+
+## 4.- Procesar
+
+### 4.1.- Convertir las siguientes variables: ride_id, rideable_type, start_station_id y end_station_id, en caracteres para que puedan apilarse correctamente 
+
+```{r}
+abr_2022 <- mutate(abr_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+may_2022 <- mutate(may_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+jun_2022 <- mutate(jun_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+jul_2022 <- mutate(jul_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+ago_2022 <- mutate(ago_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+sep_2022 <- mutate(sep_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+oct_2022 <- mutate(oct_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+nov_2022 <- mutate(nov_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+dic_2022 <- mutate(dic_2022, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+ene_2023 <- mutate(ene_2023, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+feb_2023 <- mutate(feb_2023, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+mar_2023 <- mutate(mar_2023, ride_id = as.character(ride_id), 
+                   rideable_type = as.character(rideable_type),
+                   start_station_id = as.character(start_station_id),
+                   end_station_id = as.character(end_station_id))
+```
+
+
+### 4.2.- Combinamos los Marcos de Datos de los 12 meses en un solo Marco de Datos
+
+
+```{r}
+resumen_12_meses <- bind_rows(abr_2022, may_2022, jun_2022, jul_2022, ago_2022, sep_2022, oct_2022, nov_2022, dic_2022, ene_2023, feb_2023, mar_2023)
+head(resumen_12_meses)
+```
+
+### 4.3.- Transformando nuestro marco de datos
+
+En esta seccion crearemos un nuevo Data Frame donde primero removeremos las columnas que no nos interesan como son: start_lat, start_lng, end_lat y end_lng. Y agregaremos a nuestro nuevo Data Frame cinco nuevas columnas, donde tendremos por separado el **ano**, **mes** y **dia** de inicio del evento, ademas agregaremos el **dia de la semana** y por ultimo el **tiempo en minutos** de cada viaje 
+
+### 4.4.-  Removeremos las columnas que no nos interesan como son: start_lat, start_lng, end_lat y end_lng.
+
+```{r}
+resumen_adaptado <- resumen_12_meses %>% 
+  select(-(start_lat:end_lng))
+head(resumen_adaptado)
+```
+
+### 4.5.- Agregamos a nuestro nuevo Data Frame cuatro nuevas columnas, donde tendremos por separado el **ano**, **mes** y **dia** de inicio del evento, ademas agregaremos el **dia de la semana** Por ultimo agregamos una nueva columna que contemple el **tiempo en minutos** de cada viaje 
+
+```{r}
+resumen_adaptado <- resumen_adaptado %>%
+  arrange(desc(started_at)) %>%
+  mutate(
+    ano = year(started_at),
+    mes = month(started_at),
+    dia = mday(started_at),
+    ano_mes = yearmonth(started_at),
+    dia_semana = wday(started_at, label = TRUE, abbr = FALSE),
+    tiempo_viaje_min = as.numeric(difftime(ended_at, started_at, units= "min")))
+head(resumen_adaptado)
+```
+
+
+### 4.6.- Inspeccionar la nueva tabla que se ha creado 
+
+#### 4.6.1.- Lista de nombres de columna
+
+```{r}
+colnames(resumen_adaptado)
+```
+
+#### 4.6.2.- Mirar las dimensiones, la lista de columnas y tipos de datos (numéricos, de caracteres, etc.) del nuevo Marco de Datos.
+
+```{r}
+glimpse(resumen_adaptado)
+```
+
+#### 4.6.3.- Resumen de Estadisticas de datos.
+
+
+```{r}
+summary(resumen_adaptado$ano)
+summary(resumen_adaptado$mes)
+summary(resumen_adaptado$dia)
+summary(resumen_adaptado$dia_semana)
+summary(resumen_adaptado$tiempo_viaje_min)
+```
+
+**Aqui podemos observar que existen promedios de viajes negativos, por lo que debemos profundizar para corregir esta anomalia**
+
+
+### 4.7.- Comenzamos el proceso de limpieza de nuestro marco de datos para garantizar la integridad de los datos
+
+#### 4.7.1.- Comenzamos con la revision de la existencia de duplicados
+
+```{r}
+duplicados <- duplicated(resumen_adaptado)
+sum(duplicados)
+```
+** No hay existencia de duplicados**
+
+
+#### 4.7.2.- Revisamos que la columna de identificacion de viajes no tenga datos nulos o perdidos
+
+```{r}
+nulos <-  sum(is.na(resumen_adaptado$ride_id))
+nulos
+```
+
+**No hay existencias de datos nulos o perdidos**
+
+#### 4.7.3.- Revisamos que los datos de los tipos de bicicletas esten bien cargados, es decir, que no existan tipos de bicicletas diferentes a los establecidos, que no existan Nulos y ademas que no existan espacios en blanco
+
+```{r}
+tipos_bicicletas <- resumen_adaptado %>% distinct(rideable_type)
+tipos_bicicletas
+```
+
+
+#### 4.7.4.- Revisamos que los datos de los tipos de clientes esten bien cargados, es decir, que no existan tipos de bicicletas diferentes a los establecidos, que no existan Nulos y ademas que no existan espacios en blanco
+
+```{r}
+tipos_clientes <- resumen_adaptado %>% distinct(member_casual)
+tipos_clientes
+```
+
+#### 4.7.5.- Renombramos las variables de nuestro Marco de Datos Definitivo por denominaciones mas actualizadas
+
+```{r}
+resumen_definitivo <- resumen_adaptado %>%
+  rename(id_viaje = ride_id, tipo_bicicleta = rideable_type, inicio_viaje = started_at, fin_viaje = ended_at, nombre_est_ini = start_station_name, id_est_ini = start_station_id, nombre_est_fin = end_station_name, id_est_fin = end_station_id, tipo_usuario = member_casual )
+head(resumen_definitivo)
+``` 
+
+#### 4.7.6.- Creamos un nuevo marco de datos "resumen_definitivo_v2" que elimine las filas que se refieren a las bicicletas que se retiraron del mercado y se sacaron de circulación. Esto se reflejaría en que la duración del viaje sea inferior a 0
+
+```{r}
+resumen_definitivo_v2 <- resumen_definitivo[!(resumen_definitivo$tiempo_viaje_min<0), ]
+```
+
+#### 4.7.7.- Verificamos que se eliminaron los valores negativos de la variable tiempo de viaje
+
+* **Cuantas filas hay en el marco de datos?**
+
+```{r}
+nrow(resumen_definitivo_v2)
+```
+**Aqui podemos observar que se eliminaron 99 filas de las 5.803.720 que existian originalmente**
+
+
+## 5.- Comenzamos el proceso de Analisis Descriptivo **(Analizar y Compartir)**
+
+### 5.1.- Análisis descriptivo sobre la variable **tiempo_viaje_min** (todas las cifras en minutos). Vemos un resumen de las estadisticas de esta variable 
+
+```{r}
+summary(resumen_definitivo_v2$tiempo_viaje_min)
+```
+**Podemos ver que ya no existen valores negativos en esta variable ya que fueron eliminados**
+
+
+### 5.2.- Comparamos las estadisticas correspondientes a los tiempos de viaje (media, mediana, max y min) de los tipos de usuarios **miembros** VS **casuales**
+
+```{r}
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario, FUN = mean) # la media
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario, FUN = median) # la mediana
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario, FUN = max) # maximo
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario, FUN = min) # minimo
+```
+
+### 5.3.- Revisamos el tiempo promedio de viaje por cada día, para cada tipo de usuarios
+
+```{r}
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario + resumen_definitivo_v2$dia_semana, FUN = mean)
+```
+
+### 5.4.- Analizamos el numero de viajes y el tiempo promedio de duracion de los mismos, por tipo de usuario y día de la semana 
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_usuario, dia_semana) %>%  #agrupado por tipo de usuario y día de la semana 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_usuario, dia_semana)	# ordenado por tipo de usuario y dia de la semana	
+```
+
+
+### 5.5.- Revisamos el tiempo promedio de viaje por mes, para cada tipo de usuarios
+
+```{r}
+aggregate(resumen_definitivo_v2$tiempo_viaje_min ~ resumen_definitivo_v2$tipo_usuario +  resumen_definitivo_v2$ano_mes, FUN = mean) 
+```
+
+
+### 5.6.- Analizamos el numero de viajes y el tiempo promedio de duracion de los mismos, por tipo de usuario y mes del ano 
+
+```{r}
+resumen_por_ano_mes <- resumen_definitivo_v2 %>% 
+  group_by(tipo_usuario, ano_mes) %>%  #agrupado por tipo de usuario y mes del ano
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_usuario, ano_mes)	# ordenado por tipo de usuario y mes del ano
+resumen_por_ano_mes
+```
+
+
+### 5.7.- Visualicemos el numero de viajes por cada día, para cada tipo de usuarios
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_usuario, dia_semana) %>%  #agrupado por tipo de usuario y día de la semana 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_usuario, dia_semana) %>%	# ordenado por tipo de usuario y dia de la semana	
+  ggplot(aes(x = dia_semana, y = numero_viajes, fill = tipo_usuario)) +  geom_col(position = "dodge") +
+  labs(title = "Numero de Viajes por Dia, segun Tipos de Usuarios", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+Como podemos ver en el grafico, los usuarios con **Membresia**, presentan un elevado numero de viajes durante los dias laborables (lunes a viernes), manteniendo una leve disminucion de los mismos los fines de semana (sabado y domingo). En cuanto a los usuarios **Casuales,** podemos ver en el grafico, que en los dias laborables, el numero de viajes de estos usuarios se mantiene mas o menos constantes, mostrando un ligero aumento los dias jueves y viernes y un salto considerable los dias sabados y domingos, siendo el sabado el pico mas alto de la grafica.
+Comparando los tipos de usuarios **Membresia Vs Casuales** podemos observar que los usuarios con **Membresia** se mantiene muy por encima de los usuarios **Casuales** a execepcion de los fines de semana (Sabados y Domingos), donde el numero de viajes de los usuarios **Casuales** crece, mientras que los usuarios con **Membresia** disminuyen en su numero de viajes, sin embargo, solo el dia sabado es superado ligeramente el numero de viajes de los usuarios con **Membresia** por los usuarios **Casuales.**
+
+
+### 5.8.- Vamos a crear una visualización para ver el tiempo promedio de viaje por cada día, para cada tipo de usuarios
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_usuario, dia_semana) %>%  #agrupado por tipo de usuario y día de la semana 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_usuario, dia_semana) %>%	# ordenado por tipo de usuario y dia de la semana	
+  ggplot(aes(x = dia_semana, y = promedio_duracion, fill = tipo_usuario)) +
+  geom_col(position = "dodge")+
+  labs(title = "Tiempo promedio de Viaje por Dia, segun Tipos de Usuarios", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+Como podemos ver en el grafico, para los usuarios **Casuales,** el tiempo promedio de duracion mas alto se presenta los fines de semana (sabado y domingo), los dias laborables se nota una caida de los mismos, a partir del dia lunes hasta el dia jueves, y los viernes comienza una leve recuperacion.
+Por otro lado los usuarios con **Membresia,** presentan un promedio de duracion mas o menos constante durante toda la semana.
+Comparando ambos tipos de usuarios **Membresia Vs Casuales** podemos observar que el promedio de duracion de los viajes de los usuarios **Casuales,** en la mayoria de los casos es mas del doble del tiempo promedio de duracion de los usuarios con **Membresia.**
+
+
+### 5.9.- Visualicemos el número de viajes por mes por tipo de usuario
+
+#### 5.9.1.- Para efectos de la visualizacion, como tenemos una variable de tipo **"yearmon"**, para poder utilizarla en ggplot2 debemos convertirla en una variable tipo **"tsibble"**
+
+```{r}
+resumen_por_ano_mes_v2 <- resumen_por_ano_mes %>%
+  as_tsibble(key = tipo_usuario, index= ano_mes)
+resumen_por_ano_mes_v2
+```
+
+
+```{r}
+resumen_por_ano_mes_v2 %>% 
+  ggplot(aes(x = ano_mes, y = numero_viajes, fill = tipo_usuario)) +
+  geom_col(position = "dodge") +
+  labs(title = "Numero de Viajes por Mes, segun Tipos de Usuarios", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+En este grafico podemos observar que el comportamiento en cuanto al numero de viajes para los tipos de usuarios **Membresia Vs Casuales,** es muy parecido, es decir hay un crecimiento progresivo a partir del mes de marzo hasta el mes de agosto y luego comienza una caida progresiva desde septiembre a febrero.
+El numero de viajes de los usuarios con **Membresia** es superior en todos los meses del ano, solo en los meses de junio y julio la brecha entre ambos tipos de usuarios disminuye considerablemente. 
+
+
+
+### 5.10.- Vamos a crear una visualización para ver el tiempo promedio de Viaje  por mes por tipo de usuario.
+
+```{r}
+resumen_por_ano_mes_v2 %>% 
+  ggplot(aes(x = ano_mes, y = promedio_duracion, fill = tipo_usuario,)) +
+  geom_col(position = "dodge") +
+  labs(title = "Tiempo promedio de Viaje por Mes, segun Tipos de Usuarios", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+Se evidencia que el tiempo promedio de viaje por mes por tipo de usuario, es muy superior por los miembros **Casuales** en todos los meses del ano.
+
+
+### 5.11.- Vamos a crear una visualización para comparar el uso del tipo de bicicleta por tipo de usuario.
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_usuario, tipo_bicicleta) %>%  #agrupado por tipo de usuario y tipo de bicicleta 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_usuario, tipo_bicicleta) %>%	# ordenado por tipo de usuario y tipo de bicicleta	
+  ggplot(aes(x = tipo_bicicleta, y = numero_viajes, fill = tipo_usuario)) +  geom_col() +
+  labs(title = "Tipo de Bicicleta Vs Usuario", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+El uso de las bicicletas electricas y clasicas por tipo de usuario es muy similar, habiendo un ligero incremento por parte de los usuarios casuales en cuanto al uso de las bicicletas electricas con respecto a las clasicas. El uso de las bicicletas acopladas es muy bajo y solo es requerida por usuarios casuales.
+
+
+### 5.12.- Vamos a crear una visualización para comparar el uso del tipo de bicicleta por dia de la semana.
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_bicicleta, dia_semana) %>%  #agrupado por tipo de usuario y día de la semana 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_bicicleta, dia_semana) %>%	# ordenado por tipo de usuario y dia de la semana	
+  ggplot(aes(x = dia_semana, y = numero_viajes, fill = tipo_bicicleta)) +  geom_col(position = "dodge") +
+  labs(title = "Numero de Viajes por Dia, segun Tipos de Bicicletas", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+Se evidencia un ligero incremento en el numero de viajes a traves del uso de las bicicletas electricas con respecto a las bicicletas clasicas. Es muy claro el poco uso de las bicicletas acopladas por parte de los usuarios.
+
+
+### 5.13.- Vamos a crear una visualización para comparar el uso del tipo de bicicleta por mes en un ano.
+
+```{r}
+resumen_definitivo_v2 %>% 
+  group_by(tipo_bicicleta, ano_mes) %>%  #agrupado por tipo de usuario y día de la semana 
+  summarise(numero_viajes = n(), promedio_duracion = mean(tiempo_viaje_min)) %>%  # estadisticas: numero de viajes y promedio de duracion de los viajes
+  arrange(tipo_bicicleta, ano_mes) %>%	# ordenado por tipo de usuario y dia de la semana	
+  ggplot(aes(x = ano_mes  , y = numero_viajes, fill = tipo_bicicleta)) +  geom_col(position = "dodge") +
+  labs(title = "Numero de Viajes por Mes, segun Tipos de Bicicletas", 
+       caption = "Analisis realizado por Ing. Hernan Lugo")
+```
+
+Podemos ver la preferencia por las bicicletas electricas por parte de los usuarios, sin embargo, las bicicletas clasicas siguen siendo un fuerte aliado de los usuarios del sistema.
+
+
+## 6.- Actuar
+
+### 6.1.- CONCLUSIONES
+
+Segun lo arrojado en este analisis podria decirse que los usuarios con **Membresia,** son usuarios que utilizan el sistema de bicicletas para ir a sus sitios de trabajo los dias laborables (lunes a viernes), mientras que los usuarios **Casuales** son usuarios que utilizan el sistema para ejercitarse, ir de compras, hacer diligencias, etc. 
+Por este motivo el tiempo promedio de viaje de los usuarios **Casuales** es muy superior, en algunos casos, por encima del doble al de los usuarios con **Membresia**.
+Se evidencia un crecimiento en el numero de viajes de ambos tipos de usuarios en los meses de verano y una disminucion en el numero de viajes en los meses de invierno.
+Los tipos de bicicletas mas usadas son las electricas y las clasicas, no asi el caso de las bicicletas acopladas las cuales tienen una muy baja preferencia solo un pequeno grupo de los usuarios casuales hacen uso de las mismas.
+
+### 6.2.- RECOMENDACIONES
+
+1.- Gestionar la estrategia de mercado hacia los usuarios **Casuales**, que vaya dirigida en funcion del tiempo promedio de viaje Vs reduccion de costos (**Membresia**)
+
+2.- Promover el uso del sistema en epoca de invierno, como medida de ejercitacion, deporte y salud
+
+3.- Aprovechar los meses de verano para lanzar las estrategias de marketing dirigidas a la adquisicion de **Membresias** ya que en estos meses el numero de viajes de los usuarios **Casuales** es muy alto y ademas el tiempo promedio de viajes es mucho mayor.
+
+4.- Profundizar mas sobre los usuarios **Casuales** a traves de encuesta, para ver cuales son sus espectativas, necesidades y requerimientos del servicio, de esa manera poder acentuar las estrategias de Mercado que lo incentiven a pasar de ser un usuario **Casual** a un usuario con **Membresia**.
+
+
